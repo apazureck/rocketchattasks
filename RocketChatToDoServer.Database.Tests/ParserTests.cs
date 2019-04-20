@@ -12,10 +12,11 @@ namespace Tests
         {
         }
 
-        [TestCase]
-        public void TestSingleUser(string inputMessage)
-        {
+        [Test]
+        public void TestSingleUser() {
+            string message = "@pazureck @wuzifuzi: Put new Task together, helping @mabbl until next wednesday";
             var tp = new TaskParser();
+            tp.ParseMessage(message);
             Assert.Pass();
         }
     }

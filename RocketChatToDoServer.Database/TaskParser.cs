@@ -1,6 +1,7 @@
 ﻿using RocketChatToDoServer.Database.Models;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace RocketChatToDoServer.Database
 {
@@ -30,8 +31,29 @@ namespace RocketChatToDoServer.Database
                 };
             };
         }
+        private const string userGroup = "name";
+        private const string taskGroup = "task";
+        public string SeparateUsersAndTaskRegex { get => separateUsersAndTaskRegex != null ? separateUsersAndTaskRegex.ToString() : null; set => separateUsersAndTaskRegex = new Regex(value); }
+        private Regex separateUsersAndTaskRegex = new Regex($@"(?:@(?<{userGroup}>\w+).*?)+:(?<{taskGroup}>.*)");
 
-        public string SeparateÛsersAndTaskRegex { get; set; } = @"(?:@(?<name>\w +).*?)+:(?<task>.*)";
+        public void ParseMessage(string message)
+        {
+            // get users via regex:
+
+            var usermatch = separateUsersAndTaskRegex.Match(message);
+            string taskmessage = usermatch.Groups[taskGroup].Value;
+            DateTime? duedate = GetDueDate(taskmessage);
+            foreach (System.Text.RegularExpressions.Capture username in usermatch.Groups[userGroup].Captures)
+            {
+                var user = GetUser(username.Value);
+                CreateTask(user, taskmessage, duedate);
+            }
+        }
+
+        private DateTime GetDueDate(object taskMessage)
+        {
+            return DateTime.Now;
+        }
 
         /// <summary>
         /// Regular expression to parse a task

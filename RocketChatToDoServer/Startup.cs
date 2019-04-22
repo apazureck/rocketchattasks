@@ -3,9 +3,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RocketChatToDoServer.Database;
+using RocketChatToDoServer.Database.Models;
+using System;
 using System.Linq;
 
 namespace RocketChatToDoServer
@@ -22,6 +26,7 @@ namespace RocketChatToDoServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // create connection string for sqlite database using the appsettings.json section database
             string connection = Configuration.GetSection("database").AsEnumerable()
                 .Select(x => x.Key + "=" + x.Value)
                 .Aggregate((a, b) => a + ";" + b);
@@ -35,6 +40,38 @@ namespace RocketChatToDoServer
             {
                 configuration.RootPath = "ClientApp/dist";
             });
+
+            services.AddScoped(svcs => new TaskParser(svcs.GetService<ILogger<TaskParser>>(),
+                    (username, logger) =>
+                    {
+                        using(TaskContext ct = svcs.GetService<TaskContext>())
+                        {
+                            User user = ct.Users.FirstOrDefault(u => u.Name == username);
+                            if(user == null)
+                            {
+                                user = ct.Users.Add(new User()
+                                {
+                                    Name = username
+                                }).Entity;
+                                ct.SaveChanges();
+                            }
+                            return user;
+                        }
+                    }, (User owner, string taskDescription, ILogger logger, DateTime? dueDate) =>
+                    {
+                        using(TaskContext tc = svcs.GetService<TaskContext>())
+                        {
+                            Task t = tc.Tasks.Add(new Task()
+                            {
+                                CreationDate = DateTime.Now,
+                                DueDate = dueDate ?? default,
+                                TaskDescription = taskDescription,
+                                User = owner
+                            }).Entity;
+                            tc.SaveChanges();
+                            return t;
+                        }
+                    }));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

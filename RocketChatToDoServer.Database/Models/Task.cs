@@ -14,5 +14,6 @@ namespace RocketChatToDoServer.Database.Models
         public int UserID { get; set; }
         public User User { get; set; }
         public string TaskDescription { get; set; }
+        public bool Done { get; set; }
     }
 }

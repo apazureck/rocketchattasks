@@ -27,7 +27,7 @@ namespace RocketChatToDoServer
         public void ConfigureServices(IServiceCollection services)
         {
             // create connection string for sqlite database using the appsettings.json section database
-            string connection = Configuration.GetSection("database").AsEnumerable()
+            string connection = Configuration.GetSection("database").GetChildren()
                 .Select(x => x.Key + "=" + x.Value)
                 .Aggregate((a, b) => a + ";" + b);
             services.AddDbContext<TaskContext>
@@ -44,33 +44,31 @@ namespace RocketChatToDoServer
             services.AddScoped(svcs => new TaskParser(svcs.GetService<ILogger<TaskParser>>(),
                     (username, logger) =>
                     {
-                        using(TaskContext ct = svcs.GetService<TaskContext>())
+                        // no using here, as the context is managed by the di scope
+                        TaskContext ct = svcs.GetService<TaskContext>();
+                        User user = ct.Users.FirstOrDefault(u => u.Name == username);
+                        if (user == null)
                         {
-                            User user = ct.Users.FirstOrDefault(u => u.Name == username);
-                            if(user == null)
+                            user = ct.Users.Add(new User()
                             {
-                                user = ct.Users.Add(new User()
-                                {
-                                    Name = username
-                                }).Entity;
-                                ct.SaveChanges();
-                            }
-                            return user;
+                                Name = username
+                            }).Entity;
+                            ct.SaveChanges();
                         }
+                        return user;
                     }, (User owner, string taskDescription, ILogger logger, DateTime? dueDate) =>
                     {
-                        using(TaskContext tc = svcs.GetService<TaskContext>())
+                        // no using here, as the context is managed by the di scope
+                        TaskContext tc = svcs.GetService<TaskContext>();
+                        Task t = tc.Tasks.Add(new Task()
                         {
-                            Task t = tc.Tasks.Add(new Task()
-                            {
-                                CreationDate = DateTime.Now,
-                                DueDate = dueDate ?? default,
-                                TaskDescription = taskDescription,
-                                User = owner
-                            }).Entity;
-                            tc.SaveChanges();
-                            return t;
-                        }
+                            CreationDate = DateTime.Now,
+                            DueDate = dueDate ?? default,
+                            TaskDescription = taskDescription.Trim(),
+                            User = owner
+                        }).Entity;
+                        tc.SaveChanges();
+                        return t;
                     }));
         }
 

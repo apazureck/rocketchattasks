@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\chatbot\src\Rocket.Chat.Net.Bot.Standard\Rocket.Chat.Net.Bot.Standard.csproj" />
     <ProjectReference Include="..\RocketChatToDoServer.Database\RocketChatToDoServer.Database.csproj" />
   </ItemGroup>
 

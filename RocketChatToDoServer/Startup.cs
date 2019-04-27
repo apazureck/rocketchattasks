@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RocketChatToDoServer.Database;
 using RocketChatToDoServer.Database.Models;
+using RocketChatToDoServer.TodoBot;
 using System;
 using System.Linq;
 
@@ -26,6 +27,15 @@ namespace RocketChatToDoServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton(Configuration);
+            services.AddSingleton<Bot>();
+            services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
+            {
+                builder.AllowAnyOrigin()
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
+            }));
+
             // create connection string for sqlite database using the appsettings.json section database
             string connection = Configuration.GetSection("database").GetChildren()
                 .Select(x => x.Key + "=" + x.Value)
@@ -75,6 +85,9 @@ namespace RocketChatToDoServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            // Connect Bot
+            app.ApplicationServices.GetService<Bot>().LoginAsync();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

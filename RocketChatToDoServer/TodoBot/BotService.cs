@@ -1,26 +1,28 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Rocket.Chat.Net.Bot;
 using Rocket.Chat.Net.Interfaces;
 using Rocket.Chat.Net.Models.LoginOptions;
+using RocketChatToDoServer.Database;
 using RocketChatToDoServer.TodoBot.Responses;
 using System;
 using System.Threading.Tasks;
 
 namespace RocketChatToDoServer.TodoBot
 {
-    public class Bot
+    public class BotService
     {
-        private readonly ILogger<Bot> logger;
+        private readonly ILogger<BotService> logger;
+
         private readonly BotConfiguration botConfiguration = new BotConfiguration();
-        private readonly RocketChatBot bot;
+        private readonly RcDiBot bot;
         private readonly ILoginOption loginOption;
 
-        public Bot(ILogger<Bot> logger, IConfiguration configuration)
+        public BotService(ILogger<BotService> logger, IConfiguration configuration, IServiceCollection services)
         {
             configuration.GetSection("bot").Bind(botConfiguration);
             this.logger = logger;
-
             loginOption = new LdapLoginOption
             {
                 Username = botConfiguration.Username,
@@ -28,18 +30,15 @@ namespace RocketChatToDoServer.TodoBot
             };
 
             // SetUp Bot
-            bot = new RocketChatBot(botConfiguration.RocketServerUrl, botConfiguration.UseSsl, logger);
-            bot.AddResponse(new TaskListResponse(logger));
-        }
-
-        public async Task Login()
-        {
-            await bot.LoginAsync(loginOption);
+            bot = new RcDiBot(botConfiguration.RocketServerUrl, botConfiguration.UseSsl, services, logger);
         }
 
         public async void LoginAsync()
         {
+            await bot.ConnectAsync();
             await bot.LoginAsync(loginOption);
+            await bot.SubscribeAsync<MentionedResponse>(Stream.NotifyUser_Notifications, false);
+            
         }
     }
 

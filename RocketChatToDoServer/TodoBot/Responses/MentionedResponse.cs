@@ -1,15 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using HandlebarsDotNet;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Rocket.Chat.Net.Bot;
 using Rocket.Chat.Net.Bot.Interfaces;
 using Rocket.Chat.Net.Bot.Models;
 using RocketChatToDoServer.Database;
-using RocketChatToDoServer.Database.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Task = RocketChatToDoServer.Database.Models.Task;
 
 namespace RocketChatToDoServer.TodoBot.Responses
@@ -20,16 +20,35 @@ namespace RocketChatToDoServer.TodoBot.Responses
         private readonly TaskContext context;
 
         private const string TASKTEMPLATENAME = "TaskTemplate";
-        private const string DEFAULTTASKTEMPLATE = "**{{ID}}**: {{TaskDescription}}";
+        private const string DEFAULTTASKTEMPLATE = "**{{ID}}**: {{TaskDescription}}{{NotDefaultDate DueDate}} - Due: {{DueDate}}{{/NotDefaultDate}}";
         private const string DEFAULTTASKLISTTEMPLATE = "**Your open Tasks:**\n{{#each this}}{{> " + TASKTEMPLATENAME + "}}\n{{/each}}";
 
         private static Func<object, string> TaskListTemplate { get; set; }
 
         static MentionedResponse()
         {
+            HandlebarsBlockHelper notDefaultDateHelper = (TextWriter output, HelperOptions options, dynamic context, object[] arguments) => {
+                if (arguments.Length != 1)
+                {
+                    throw new HandlebarsException("{{NotDefaultDateHelper}} helper must have exactly one argument");
+                }
+                var arg = (DateTime)arguments[0];
+                if (arg != default)
+                {
+                    options.Template(output, context);
+                }
+            };
+            Handlebars.RegisterHelper("NotDefaultDate", notDefaultDateHelper);
 
-            HandlebarsDotNet.Handlebars.RegisterTemplate(TASKTEMPLATENAME, DEFAULTTASKTEMPLATE);
-            TaskListTemplate = HandlebarsDotNet.Handlebars.Compile(DEFAULTTASKLISTTEMPLATE);
+            Handlebars.RegisterHelper("FormatDate", (writer, context, parameters) =>
+            {
+                var date = (DateTime)parameters[0];
+                string format = parameters[1] as string;
+                writer.WriteSafeString(date.ToString(format));
+            });
+
+            Handlebars.RegisterTemplate(TASKTEMPLATENAME, DEFAULTTASKTEMPLATE);
+            TaskListTemplate = Handlebars.Compile(DEFAULTTASKLISTTEMPLATE);
         }
 
         public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context)

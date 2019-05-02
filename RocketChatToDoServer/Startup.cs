@@ -28,7 +28,7 @@ namespace RocketChatToDoServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(Configuration);
-            services.AddSingleton<BotService>(provider => new BotService(provider.GetService<ILogger<BotService>>(), Configuration, services));
+            services.AddSingleton(provider => new BotService(provider.GetService<ILogger<BotService>>(), Configuration, services));
             services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
             {
                 builder.AllowAnyOrigin()

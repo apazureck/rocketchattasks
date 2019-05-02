@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using RocketChatToDoServer.Database;
 
 namespace RocketChatToDoServer.Controllers
 {
@@ -14,9 +9,9 @@ namespace RocketChatToDoServer.Controllers
     public class RocketChatInputController : ControllerBase
     {
         private readonly ILogger<RocketChatInputController> logger;
-        private readonly TaskParser taskParser;
+        private readonly Database.TaskParser taskParser;
 
-        public RocketChatInputController(ILogger<RocketChatInputController> logger, TaskParser taskParser)
+        public RocketChatInputController(ILogger<RocketChatInputController> logger, Database.TaskParser taskParser)
         {
             this.logger = logger;
             this.taskParser = taskParser;

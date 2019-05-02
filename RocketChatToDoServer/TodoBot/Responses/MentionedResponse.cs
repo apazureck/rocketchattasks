@@ -18,7 +18,7 @@ namespace RocketChatToDoServer.TodoBot.Responses
     {
         private readonly ILogger logger;
         private readonly TaskContext context;
-
+        private readonly TaskParser.TaskParserService parserService;
         private const string TASKTEMPLATENAME = "TaskTemplate";
         private const string DEFAULTTASKTEMPLATE = "**{{ID}}**: {{TaskDescription}}{{NotDefaultDate DueDate}} - Due: {{DueDate}}{{/NotDefaultDate}}";
         private const string DEFAULTTASKLISTTEMPLATE = "**Your open Tasks:**\n{{#each this}}{{> " + TASKTEMPLATENAME + "}}\n{{/each}}";
@@ -27,7 +27,8 @@ namespace RocketChatToDoServer.TodoBot.Responses
 
         static MentionedResponse()
         {
-            HandlebarsBlockHelper notDefaultDateHelper = (TextWriter output, HelperOptions options, dynamic context, object[] arguments) => {
+            void notDefaultDateHelper(TextWriter output, HelperOptions options, dynamic context, object[] arguments)
+            {
                 if (arguments.Length != 1)
                 {
                     throw new HandlebarsException("{{NotDefaultDateHelper}} helper must have exactly one argument");
@@ -36,8 +37,11 @@ namespace RocketChatToDoServer.TodoBot.Responses
                 if (arg != default)
                 {
                     options.Template(output, context);
+                } else
+                {
+                    options.Inverse(output, context);
                 }
-            };
+            }
             Handlebars.RegisterHelper("NotDefaultDate", notDefaultDateHelper);
 
             Handlebars.RegisterHelper("FormatDate", (writer, context, parameters) =>
@@ -51,18 +55,36 @@ namespace RocketChatToDoServer.TodoBot.Responses
             TaskListTemplate = Handlebars.Compile(DEFAULTTASKLISTTEMPLATE);
         }
 
-        public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context)
+        public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context, TaskParser.TaskParserService parserService)
         {
             this.logger = logger;
             this.context = context;
+            this.parserService = parserService;
         }
         protected override IMessageResponse RespondTo(NotifyUserMessageArgument input)
         {
-            if (input.IsDirectMessage)
+            switch(input.Payload.Type)
             {
-                return RespondToDirectMessage(input);
+                case NotifyUserMessageArgument.PRIVATEMESSAGETYPE:
+                    return RespondToDirectMessage(input);
+                case NotifyUserMessageArgument.PRIVATECHANNELMESSAGE:
+                case NotifyUserMessageArgument.PUBLICCHANNELMESSAGETYPE:
+                    return RespondToChannelMessage(input);
+                default:
+                    return new BasicResponse("Sorry, I do not know what you mean.");
             }
-            return new BasicResponse("Sorry, I do not know what you mean.");
+        }
+
+        private IMessageResponse RespondToChannelMessage(NotifyUserMessageArgument input)
+        {
+            Task t = parserService.GetTask(input.Payload.Message.Msg);
+            if(t != null)
+            {
+                return new BasicResponse($"Created Task {t.ID}: {t.TaskDescription}", input.Payload.RoomId);
+            } else
+            {
+                return new BasicResponse("Did not understand");
+            }
         }
 
         private IMessageResponse RespondToDirectMessage(NotifyUserMessageArgument input)
@@ -125,7 +147,7 @@ namespace RocketChatToDoServer.TodoBot.Responses
         {
             IEnumerable<Task> tl = GetTaskList(context, input.Title.Substring(1)).Where(x => !x.Done);
             string rs = tl.Select(t => t.ID + " " + t.TaskDescription + (t.DueDate != default ? "; DUE: " + t.DueDate : "")).Aggregate("", (a, b) => a + $"\n- " + b);
-            return new BasicResponse(TaskListTemplate(tl), input.Payload.RoomId);
+            return new BasicResponse(TaskListTemplate(tl));
         }
 
         private ICollection<Task> GetTaskList(TaskContext context, string username) => context.Users.Include(u => u.Tasks).First(x => x.Name == username).Tasks;

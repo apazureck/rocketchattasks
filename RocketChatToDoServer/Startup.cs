@@ -29,6 +29,7 @@ namespace RocketChatToDoServer
         {
             services.AddSingleton(Configuration);
             services.AddSingleton(provider => new BotService(provider.GetService<ILogger<BotService>>(), Configuration, services));
+            services.AddScoped<TaskParser.TaskParserService>();
             services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
             {
                 builder.AllowAnyOrigin()
@@ -51,7 +52,7 @@ namespace RocketChatToDoServer
                 configuration.RootPath = "ClientApp/dist";
             });
 
-            services.AddScoped(svcs => new TaskParser(svcs.GetService<ILogger<TaskParser>>(),
+            services.AddScoped(svcs => new Database.TaskParser(svcs.GetService<ILogger<Database.TaskParser>>(),
                     (username, logger) =>
                     {
                         // no using here, as the context is managed by the di scope

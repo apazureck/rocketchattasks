@@ -8,7 +8,7 @@ namespace RocketChatToDoServer.Database
 {
     public class TaskParser
     {
-        public TaskParser(ILogger<TaskParser> logger, Func<string, ILogger, User> getUserCallback, CreateTaskDelegate createTaskCallback)
+        public TaskParser(ILogger logger, Func<string, ILogger, User> getUserCallback, CreateTaskDelegate createTaskCallback)
         {
             this.logger = logger;
             GetUser = getUserCallback;
@@ -20,10 +20,11 @@ namespace RocketChatToDoServer.Database
         public string SeparateUsersAndTaskRegex { get => separateUsersAndTaskRegex != null ? separateUsersAndTaskRegex.ToString() : null; set => separateUsersAndTaskRegex = new Regex(value); }
         private Regex separateUsersAndTaskRegex = new Regex($@"(?:@(?<{USERGROUPNAME}>\w+).*?)+:(?<{TASKGROUPNAME}>.*)");
 
-        public void ParseMessage(string message, ILogger contextLogger, DateTime? now)
+        public Task ParseMessage(string message, ILogger contextLogger, DateTime? now = null)
         {
             using (contextLogger.BeginScope("ParseMessage"))
             {
+                Task task = null;
                 contextLogger.LogTrace("Calling Parse Message");
                 now = now ?? DateTime.Now;
                 // get users via regex:
@@ -50,14 +51,14 @@ namespace RocketChatToDoServer.Database
                         continue;
                     }
                     logger.LogDebug("Creating Task for user '{username}'", user.Name);
-                    CreateTask(user, taskmessage, contextLogger, duedate);
+                    task = CreateTask(user, taskmessage, contextLogger, duedate);
                 }
+                return task;
             }
         }
 
         public string UntilRegex { get => untilRegex.ToString(); set => untilRegex = new Regex(value); }
         private Regex untilRegex = new Regex(@"until(?<dateexpression>.*?)(?=until|\z)");
-        private ILogger<TaskParser> logger1;
 
         public DateTime? GetDueDate(string taskMessage, DateTime? now)
         {
@@ -146,7 +147,7 @@ namespace RocketChatToDoServer.Database
                     return null;
             }
         };
-        private readonly ILogger<TaskParser> logger;
+        private readonly ILogger logger;
 
         /// <summary>
         /// Regular expression to parse a task

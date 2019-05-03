@@ -58,7 +58,7 @@ namespace RocketChatToDoServer.Database
         }
 
         public string UntilRegex { get => untilRegex.ToString(); set => untilRegex = new Regex(value); }
-        private Regex untilRegex = new Regex(@"until(?<dateexpression>.*?)(?=until|\z)");
+        private Regex untilRegex = new Regex(@"until(?<dateexpression>.*?)(?=until|\z)", RegexOptions.IgnoreCase);
 
         public DateTime? GetDueDate(string taskMessage, DateTime? now)
         {
@@ -110,14 +110,31 @@ namespace RocketChatToDoServer.Database
             return null;
         }
 
-        private readonly List<DateFromTextDelegate> dayFunctions = new List<DateFromTextDelegate>()
+        private static readonly List<DateFromTextDelegate> dayFunctions = new List<DateFromTextDelegate>()
         {
             (string message, DateTime now, ILogger logger) =>
             {
-                Match match = Regex.Match(message, "(next |coming |upcoming )?(?<day>monday|tuesday|wednesday|thursday|friday|saturday|sunday)", RegexOptions.IgnoreCase);
-                if(match != null)
+                Match match = Regex.Match(message, "(next |coming |upcoming |this )?(?<day>monday|tuesday|wednesday|thursday|friday|saturday|sunday)", RegexOptions.IgnoreCase);
+                if(match.Success)
+                {
+                    string day = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(match.Groups["day"].Value.ToLower());
+                    var dayofweek = (DayOfWeek)Enum.Parse(typeof(DayOfWeek), day);
+                    DateTime date = now;
+                    do
+                        date = date.AddDays(1);
+                    while(date.DayOfWeek != dayofweek);
+                    return new DateTime(date.Year, date.Month, date.Day, 12, 0, 0);
+                } else
                 {
                     return null;
+                }
+            },
+            (string message, DateTime now, ILogger logger) =>
+            {
+                Match match = Regex.Match(message, "this (afternoon|evening|noon)", RegexOptions.IgnoreCase);
+                if(match.Success)
+                {
+                    return now;
                 } else
                 {
                     return null;
@@ -126,9 +143,10 @@ namespace RocketChatToDoServer.Database
             (string message, DateTime now, ILogger logger) =>
             {
                 Match match = Regex.Match(message, "tomorrow", RegexOptions.IgnoreCase);
-                if(match != null)
+                if(match.Success)
                 {
-                    return now + new TimeSpan(1, 0, 0, 0);
+                    var date = now + new TimeSpan(1, 0, 0, 0);
+                    return new DateTime(date.Year, date.Month, date.Day, 12, 0, 0);
                 } else
                 {
                     return null;
@@ -136,12 +154,36 @@ namespace RocketChatToDoServer.Database
             }
         };
 
-        private readonly List<TimeFromTextDelegate> timeFunctions = new List<TimeFromTextDelegate>()
+        private static readonly List<TimeFromTextDelegate> timeFunctions = new List<TimeFromTextDelegate>()
         {
             (string message, DateTime dueDate, DateTime now) =>
             {
+                Match m = Regex.Match(message, @"(?<time>afternoon|evening|noon)\z");
+                if(m.Success)
+                {
+                    switch(m.Groups["time"].Value.ToUpper())
+                    {
+                        case "AFTERNOON":
+                            return new DateTime(dueDate.Year, dueDate.Month, dueDate.Day, 15, 0, 0);
+                        case "EVENING":
+                            return new DateTime(dueDate.Year, dueDate.Month, dueDate.Day, 18, 0, 0);
+                        case "MORNING":
+                            return new DateTime(dueDate.Year, dueDate.Month, dueDate.Day, 9, 0, 0);
+                        case "NIGHT":
+                            return new DateTime(dueDate.Year, dueDate.Month, dueDate.Day, 23, 0, 0);
+                        case "NOON":
+                            return new DateTime(dueDate.Year, dueDate.Month, dueDate.Day, 12, 0, 0);
+                        default:
+                            throw new Exception("Wrong match found in regex!");
+                    }
+                }
+                else
+                    return null;
+            },
+            (string message, DateTime dueDate, DateTime now) =>
+            {
                 Match m = Regex.Match(message, @"(?<hour>\d+):(?<minute>\d+)");
-                if(m != null)
+                if(m.Success)
                     return new DateTime(dueDate.Year, dueDate.Month, dueDate.Day, int.Parse(m.Groups["hour"].Value), int.Parse(m.Groups["minute"].Value), 0);
                 else
                     return null;

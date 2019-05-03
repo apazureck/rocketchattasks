@@ -7,6 +7,7 @@ using Rocket.Chat.Net.Models.LoginOptions;
 using RocketChatToDoServer.Database;
 using RocketChatToDoServer.TodoBot.Responses;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace RocketChatToDoServer.TodoBot
@@ -15,30 +16,47 @@ namespace RocketChatToDoServer.TodoBot
     {
         private readonly ILogger<BotService> logger;
 
-        private readonly BotConfiguration botConfiguration = new BotConfiguration();
-        private readonly RcDiBot bot;
-        private readonly ILoginOption loginOption;
+        private readonly List<BotConfiguration> botConfigurations = new List<BotConfiguration>();
+        private readonly List<RcDiBot> bots = new List<RcDiBot>();
+        private readonly List<ILoginOption> loginOptions = new List<ILoginOption>();
 
         public BotService(ILogger<BotService> logger, IConfiguration configuration, IServiceCollection services)
         {
-            configuration.GetSection("bot").Bind(botConfiguration);
+            configuration.GetSection("bots").Bind(botConfigurations);
             this.logger = logger;
-            loginOption = new LdapLoginOption
+            foreach(var botconfig in botConfigurations)
             {
-                Username = botConfiguration.Username,
-                Password = botConfiguration.Password
-            };
+                loginOptions.Add(new LdapLoginOption
+                {
+                    Username = botconfig.Username,
+                    Password = botconfig.Password
+                });
 
-            // SetUp Bot
-            bot = new RcDiBot(botConfiguration.RocketServerUrl, botConfiguration.UseSsl, services, logger);
+                // SetUp Bot
+                bots.Add(new RcDiBot(botconfig.RocketServerUrl, botconfig.UseSsl, services, logger));
+            }
         }
 
-        public async void LoginAsync()
+        public async void LoginAsync(ILoginOption loginOption)
         {
-            await bot.ConnectAsync();
-            await bot.LoginAsync(loginOption);
-            await bot.SubscribeAsync<MentionedResponse>(Stream.NotifyUser_Notifications, false);
-            
+            foreach(RcDiBot bot in bots)
+            {
+                try
+                {
+                    await bot.ConnectAsync();
+                    await bot.LoginAsync(loginOption);
+                    await bot.SubscribeAsync<MentionedResponse>(Stream.NotifyUser_Notifications, (provider, b) =>
+                    {
+                        var taskParser = provider.GetService<TaskParser.TaskParserService>();
+                        taskParser.Username = b.Driver.Username;
+                        return new MentionedResponse(provider.GetService<ILogger<MentionedResponse>>(), provider.GetService<TaskContext>(), taskParser);
+                    }, false);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Could not login bot " + bot.Driver.Username);
+                }
+            }            
         }
     }
 

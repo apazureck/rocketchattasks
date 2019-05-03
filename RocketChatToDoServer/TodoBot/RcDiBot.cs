@@ -25,11 +25,14 @@ namespace RocketChatToDoServer.TodoBot
             this.services = services;
         }
 
-        public async Task SubscribeAsync<T>(Stream stream, params object[] parameters) where T : class, IResponse
+        public async Task SubscribeAsync<T>(Stream stream, Func<IServiceProvider, RcDiBot, IResponse> factory = null, params object[] parameters) where T : class, IResponse
         {
             string subscriptionId = await this.SubscribeAsync(stream, parameters);
             responses.Add(subscriptionId, typeof(T));
-            services.AddScoped<T>();
+            if (factory == null)
+                services.AddScoped<T>();
+            else
+                services.AddScoped(p => (T)factory(p, this));
             provider = services.BuildServiceProvider();
         }
 

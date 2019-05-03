@@ -14,13 +14,14 @@ namespace RocketChatToDoServer.TaskParser
         private Database.TaskParser taskParser;
         private readonly ILogger<TaskParserService> logger;
         private readonly TaskContext context;
-        private readonly BotConfiguration botConfiguration = new BotConfiguration();
 
-        public TaskParserService(ILogger<TaskParserService> logger, TaskContext context, IConfiguration config)
+        public string Username { get; set; }
+
+        public TaskParserService(ILogger<TaskParserService> logger, TaskContext context, string userName = null)
         {
-            config.GetSection("bot").Bind(botConfiguration);
             this.logger = logger;
             this.context = context;
+            Username = userName;
             taskParser = new Database.TaskParser(logger, (username, log) =>
             {
                 return context.Users.First(x => x.Name == username);
@@ -39,7 +40,7 @@ namespace RocketChatToDoServer.TaskParser
 
         public Database.Models.Task GetTask(string inputMessage)
         {
-            return taskParser.ParseMessage(inputMessage.Replace("@" + botConfiguration.Username, ""), logger);
+            return taskParser.ParseMessage(inputMessage.Replace("@" + Username, ""), logger);
         }
     }
 }

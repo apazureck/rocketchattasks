@@ -101,6 +101,15 @@ namespace Tests
                     ExpectedResult = date
                 });
 
+                // Morning
+
+                date = now + new TimeSpan(1, 0, 0, 0);
+                date = new DateTime(date.Year, date.Month, date.Day, 9, 0, 0);
+                tests.Add(new TestCaseData("Work until everything is done and report until tomorrow morning", now)
+                {
+                    ExpectedResult = date
+                });
+
                 date = now;
                 date = new DateTime(date.Year, date.Month, date.Day, 18, 0, 0);
                 tests.Add(new TestCaseData("Work until everything is done and report until this evening", now)
@@ -115,6 +124,39 @@ namespace Tests
 
                 date = new DateTime(date.Year, date.Month, date.Day, 12, 0, 0);
                 tests.Add(new TestCaseData("Work until everything is done and report until next thursday", now)
+                {
+                    ExpectedResult = date
+                });
+
+                date = now;
+                do
+                    date = date.AddDays(1);
+                while (date.DayOfWeek != DayOfWeek.Wednesday);
+
+                date = new DateTime(date.Year, date.Month, date.Day, 15, 0, 0);
+                tests.Add(new TestCaseData("Work until everything is done and report Until NexT WeDNESday afternoon", now)
+                {
+                    ExpectedResult = date
+                });
+
+                date = now;
+                do
+                    date = date.AddDays(1);
+                while (date.DayOfWeek != DayOfWeek.Friday);
+
+                date = new DateTime(date.Year, date.Month, date.Day, 15, 0, 0).AddDays(5*7);
+                tests.Add(new TestCaseData("Work and report until friday afternoon in 5 weeks", now)
+                {
+                    ExpectedResult = date
+                });
+
+                date = now;
+                do
+                    date = date.AddDays(1);
+                while (date.DayOfWeek != DayOfWeek.Tuesday);
+
+                date = new DateTime(date.Year, date.Month, date.Day, 12, 0, 0).AddMonths(3);
+                tests.Add(new TestCaseData("Work for two weeks until everything is done and report Until TUESDAY in 3 months", now)
                 {
                     ExpectedResult = date
                 });

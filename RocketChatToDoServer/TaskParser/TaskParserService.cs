@@ -1,11 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Rocket.Chat.Net.Models;
+﻿using Microsoft.Extensions.Logging;
 using RocketChatToDoServer.Database;
-using RocketChatToDoServer.TodoBot;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace RocketChatToDoServer.TaskParser
 {

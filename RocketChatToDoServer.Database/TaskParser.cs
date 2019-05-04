@@ -114,15 +114,34 @@ namespace RocketChatToDoServer.Database
         {
             (string message, DateTime now, ILogger logger) =>
             {
-                Match match = Regex.Match(message, "(next |coming |upcoming |this )?(?<day>monday|tuesday|wednesday|thursday|friday|saturday|sunday)", RegexOptions.IgnoreCase);
+                Match match = Regex.Match(message, @"(next |coming |upcoming |this )?(?<day>"+WEEKDAYS+@")(?: "+DAYTIMES+@")?(?: in (?<weekcount>\d+) (?<weekmonth>weeks?|months?))?", RegexOptions.IgnoreCase);
                 if(match.Success)
                 {
+                    // Get the day and determine the next 
                     string day = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(match.Groups["day"].Value.ToLower());
                     var dayofweek = (DayOfWeek)Enum.Parse(typeof(DayOfWeek), day);
                     DateTime date = now;
                     do
                         date = date.AddDays(1);
                     while(date.DayOfWeek != dayofweek);
+
+                    
+                    if(match.Groups["weekcount"].Success)
+                    {
+                        int weeks = int.Parse(match.Groups["weekcount"].Value);
+                        string weekselect = match.Groups["weekmonth"]?.Value;
+                        switch(weekselect.TrimEnd('s'))
+                        {
+                            case "week":
+                                date = date.AddDays(weeks*7);
+                                break;
+                            case "month":
+                                date = date.AddMonths(weeks);
+                                break;
+                            default:
+                                throw new ArgumentException("no weeks or months are given");
+                        }
+                    }
                     return new DateTime(date.Year, date.Month, date.Day, 12, 0, 0);
                 } else
                 {
@@ -131,7 +150,7 @@ namespace RocketChatToDoServer.Database
             },
             (string message, DateTime now, ILogger logger) =>
             {
-                Match match = Regex.Match(message, "this (afternoon|evening|noon)", RegexOptions.IgnoreCase);
+                Match match = Regex.Match(message, "this ("+DAYTIMES+")", RegexOptions.IgnoreCase);
                 if(match.Success)
                 {
                     return now;
@@ -154,11 +173,14 @@ namespace RocketChatToDoServer.Database
             }
         };
 
+        const string DAYTIMES = "afternoon|evening|noon|morning|night";
+        const string WEEKDAYS = "sunday|monday|tuesday|wednesday|thursday|friday|saturday";
+
         private static readonly List<TimeFromTextDelegate> timeFunctions = new List<TimeFromTextDelegate>()
         {
             (string message, DateTime dueDate, DateTime now) =>
             {
-                Match m = Regex.Match(message, @"(?<time>afternoon|evening|noon)\z");
+                Match m = Regex.Match(message, @"(?<time>"+DAYTIMES+@")(?: in \d+ (weeks?|months?)|\z)");
                 if(m.Success)
                 {
                     switch(m.Groups["time"].Value.ToUpper())

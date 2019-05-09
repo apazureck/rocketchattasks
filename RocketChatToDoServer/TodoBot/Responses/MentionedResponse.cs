@@ -150,6 +150,8 @@ namespace RocketChatToDoServer.TodoBot.Responses
             try
             {
                 IEnumerable<Task> tl = GetTaskList(context, input.Title.Substring(1)).Where(x => !x.Done).ToList();
+                if (tl.Count() < 1)
+                    throw new InvalidOperationException("Tasklist is empty");
                 string rs = tl.Select(t => t.ID + " " + t.Title + (t.DueDate != default ? "; DUE: " + t.DueDate : "")).Aggregate("", (a, b) => a + $"\n- " + b);
                 return new BasicResponse(TaskListTemplate(tl));
             }

@@ -20,7 +20,7 @@ namespace RocketChatToDoServer.Database
         public string SeparateUsersAndTaskRegex { get => separateUsersAndTaskRegex != null ? separateUsersAndTaskRegex.ToString() : null; set => separateUsersAndTaskRegex = new Regex(value); }
         private Regex separateUsersAndTaskRegex = new Regex($@"(?:@(?<{USERGROUPNAME}>\w+).*?)+:(?<{TASKGROUPNAME}>.*)");
 
-        public Task ParseMessage(string message, ILogger contextLogger, DateTime? now = null)
+        public Task ParseMessage(string initiator, string message, ILogger contextLogger, DateTime? now = null)
         {
             using (contextLogger.BeginScope("ParseMessage"))
             {
@@ -33,6 +33,7 @@ namespace RocketChatToDoServer.Database
                 var usermatch = separateUsersAndTaskRegex.Match(message);
                 string taskmessage = usermatch.Groups[TASKGROUPNAME].Value;
                 DateTime? duedate = GetDueDate(taskmessage, now.Value);
+                var assignees = new List<User>();
                 foreach (Capture username in usermatch.Groups[USERGROUPNAME].Captures)
                 {
                     contextLogger.LogDebug("Creating task for user '{user}'", username.Value);
@@ -50,9 +51,12 @@ namespace RocketChatToDoServer.Database
                         contextLogger.LogError(ex, "Could not find or create any user with the name '{name}'", username.Value);
                         continue;
                     }
+                    assignees.Add(user);
                     logger.LogDebug("Creating Task for user '{username}'", user.Name);
-                    task = CreateTask(user, taskmessage, contextLogger, duedate);
+                    
                 }
+                var inituser = GetUser(initiator, logger);
+                task = CreateTask(inituser, assignees, taskmessage, contextLogger, duedate);
                 return task;
             }
         }
@@ -229,7 +233,7 @@ namespace RocketChatToDoServer.Database
     /// <param name="taskDescription"></param>
     /// <param name="dueDate"></param>
     /// <returns></returns>
-    public delegate Task CreateTaskDelegate(User owner, string taskDescription, ILogger logger, DateTime? dueDate);
+    public delegate Task CreateTaskDelegate(User owner, IEnumerable<User> assignees, string taskDescription, ILogger logger, DateTime? dueDate);
 
     /// <summary>
     /// Callback to get a message and parse it to a relative date, like "next wednesday", "tomorrow", "in 2 weeks"

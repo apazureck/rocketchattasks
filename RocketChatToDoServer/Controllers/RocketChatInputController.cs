@@ -18,7 +18,7 @@ namespace RocketChatToDoServer.Controllers
         }
         public ActionResult Post(RocketChatRequest data)
         {
-            taskParser.ParseMessage(data.data.text, logger, DateTime.Now);
+            //taskParser.ParseMessage(data.data.text, logger, DateTime.Now);
             return Ok();
         }
     }

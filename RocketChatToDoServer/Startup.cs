@@ -11,6 +11,7 @@ using RocketChatToDoServer.Database;
 using RocketChatToDoServer.Database.Models;
 using RocketChatToDoServer.TodoBot;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace RocketChatToDoServer
@@ -67,7 +68,7 @@ namespace RocketChatToDoServer
                             ct.SaveChanges();
                         }
                         return user;
-                    }, (User owner, string taskDescription, ILogger logger, DateTime? dueDate) =>
+                    }, (User owner, IEnumerable<User> assignees, string taskDescription, ILogger logger, DateTime? dueDate) =>
                     {
                         // no using here, as the context is managed by the di scope
                         TaskContext tc = svcs.GetService<TaskContext>();
@@ -78,6 +79,12 @@ namespace RocketChatToDoServer
                             Title = taskDescription.Trim(),
                             Initiator = owner
                         }).Entity;
+                        tc.SaveChanges();
+                        tc.UserTaskMaps.AddRange(assignees.Select(a => new UserTaskMap
+                        {
+                            TaskID = t.ID,
+                            UserID = a.ID
+                        }));
                         tc.SaveChanges();
                         return t;
                     }));

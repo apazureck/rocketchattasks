@@ -43,9 +43,9 @@ namespace Tests
                         logger.LogDebug("Found User with username {username}", userName);
                     return user;
                 },
-                (User owner, string taskDescription, ILogger logger, DateTime? dueDate) =>
+                (User owner, IEnumerable<User> assignees, string taskDescription, ILogger logger, DateTime? dueDate) =>
                 {
-                    logger.LogDebug("Adding new Task for user {username}", owner.Name);
+                    logger.LogDebug("{username} added new task for {assignees}", owner.Name, assignees.Select(u => u.Name).Aggregate((a,b) => a+ ", " + b));
                     tasks.Add(new Task()
                     {
                         CreationDate = DateTime.Now,

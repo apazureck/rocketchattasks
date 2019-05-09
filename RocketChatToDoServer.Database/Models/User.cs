@@ -10,6 +10,6 @@ namespace RocketChatToDoServer.Database.Models
 
         public string Name { get; set; }
 
-        public ICollection<Task> Tasks { get; set; }
+        public ICollection<UserTaskMap> Tasks { get; set; }
     }
 }

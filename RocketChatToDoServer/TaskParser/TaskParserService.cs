@@ -22,12 +22,13 @@ namespace RocketChatToDoServer.TaskParser
             {
                 return context.Users.First(x => x.Name == username);
             }, (owner, taskDescription, log, dueDate) => {
+
                 Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Database.Models.Task> task = context.Tasks.Add(new Database.Models.Task()
                 {
                     CreationDate = DateTime.Now,
                     DueDate = dueDate ?? default,
-                    TaskDescription = taskDescription,
-                    UserID = owner.ID
+                    Title = taskDescription,
+                    InitiatorID = owner.ID
                 });
                 context.SaveChanges();
                 return task.Entity;

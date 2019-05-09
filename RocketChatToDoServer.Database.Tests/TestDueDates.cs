@@ -8,9 +8,9 @@ using System.Linq;
 
 namespace Tests
 {
-    public class Tests
+    public class TestDueDates
     {
-        public Tests()
+        public TestDueDates()
         {
             loggerFactory = new LoggerFactory()
                 .AddNunit();
@@ -35,7 +35,7 @@ namespace Tests
                         {
                             ID = ++userIdCounter,
                             Name = userName,
-                            Tasks = new List<Task>()
+                            Tasks = new List<UserTaskMap>()
                         };
                         users.Add(userName, user);
                     }
@@ -51,9 +51,9 @@ namespace Tests
                         CreationDate = DateTime.Now,
                         DueDate = dueDate ?? default,
                         ID = 1,
-                        TaskDescription = taskDescription,
-                        User = owner,
-                        UserID = owner.ID
+                        Title = taskDescription,
+                        Initiator = owner,
+                        InitiatorID = owner.ID
                     });
                     return tasks.Last();
                 });
@@ -85,11 +85,13 @@ namespace Tests
                 date = new DateTime(date.Year, date.Month, date.Day, 12, 0, 0);
                 tests.Add(new TestCaseData("Do stuff until tomorrow", now)
                 {
+                    TestName = "Until tomorrow",
                     ExpectedResult = date
                 });
 
                 tests.Add(new TestCaseData("Work until everything is done and report until tomorrow", now)
                 {
+                    TestName = "Test two untils and tomorrow",
                     ExpectedResult = date
                 });
 
@@ -98,6 +100,7 @@ namespace Tests
                 date = new DateTime(date.Year, date.Month, date.Day, 18, 0, 0);
                 tests.Add(new TestCaseData("Work until everything is done and report until tomorrow evening", now)
                 {
+                    TestName = "Time of day",
                     ExpectedResult = date
                 });
 
@@ -107,6 +110,7 @@ namespace Tests
                 date = new DateTime(date.Year, date.Month, date.Day, 9, 0, 0);
                 tests.Add(new TestCaseData("Work until everything is done and report until tomorrow morning", now)
                 {
+                    TestName = "Time of day 2",
                     ExpectedResult = date
                 });
 
@@ -114,6 +118,7 @@ namespace Tests
                 date = new DateTime(date.Year, date.Month, date.Day, 18, 0, 0);
                 tests.Add(new TestCaseData("Work until everything is done and report until this evening", now)
                 {
+                    TestName = "Test today",
                     ExpectedResult = date
                 });
 
@@ -125,6 +130,7 @@ namespace Tests
                 date = new DateTime(date.Year, date.Month, date.Day, 12, 0, 0);
                 tests.Add(new TestCaseData("Work until everything is done and report until next thursday", now)
                 {
+                    TestName = "Next weekdayname",
                     ExpectedResult = date
                 });
 
@@ -136,6 +142,7 @@ namespace Tests
                 date = new DateTime(date.Year, date.Month, date.Day, 15, 0, 0);
                 tests.Add(new TestCaseData("Work until everything is done and report Until NexT WeDNESday afternoon", now)
                 {
+                    TestName = "Case Sensitivity and next day of week plus time of day",
                     ExpectedResult = date
                 });
 
@@ -147,6 +154,7 @@ namespace Tests
                 date = new DateTime(date.Year, date.Month, date.Day, 15, 0, 0).AddDays(5*7);
                 tests.Add(new TestCaseData("Work and report until friday afternoon in 5 weeks", now)
                 {
+                    TestName = "in n weeks plus time of day plus weekday",
                     ExpectedResult = date
                 });
 
@@ -158,6 +166,7 @@ namespace Tests
                 date = new DateTime(date.Year, date.Month, date.Day, 12, 0, 0).AddMonths(3);
                 tests.Add(new TestCaseData("Work for two weeks until everything is done and report Until TUESDAY in 3 months", now)
                 {
+                    TestName = "allcaps and n months",
                     ExpectedResult = date
                 });
 

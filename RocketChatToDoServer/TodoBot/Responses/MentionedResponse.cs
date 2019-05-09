@@ -80,10 +80,11 @@ namespace RocketChatToDoServer.TodoBot.Responses
             Task t = parserService.GetTask(input.Payload.Message.Msg);
             if(t != null)
             {
-                return new BasicResponse($"Created Task {t.ID}: {t.TaskDescription}", input.Payload.RoomId);
+                return new BasicResponse($"Created Task {t.ID}: {t.Title}", input.Payload.RoomId);
             } else
             {
-                return new BasicResponse("Did not understand");
+                // todo: Write a more informing error message how the user can create a task
+                return new BasicResponse("Did not understand", input.Payload.RoomId);
             }
         }
 
@@ -145,11 +146,24 @@ namespace RocketChatToDoServer.TodoBot.Responses
 
         private IMessageResponse RespondToTaskList(NotifyUserMessageArgument input)
         {
-            IEnumerable<Task> tl = GetTaskList(context, input.Title.Substring(1)).Where(x => !x.Done);
-            string rs = tl.Select(t => t.ID + " " + t.TaskDescription + (t.DueDate != default ? "; DUE: " + t.DueDate : "")).Aggregate("", (a, b) => a + $"\n- " + b);
-            return new BasicResponse(TaskListTemplate(tl));
+            try
+            {
+                IEnumerable<Task> tl = GetTaskList(context, input.Title.Substring(1)).Where(x => !x.Done);
+                string rs = tl.Select(t => t.ID + " " + t.Title + (t.DueDate != default ? "; DUE: " + t.DueDate : "")).Aggregate("", (a, b) => a + $"\n- " + b);
+                return new BasicResponse(TaskListTemplate(tl));
+            }
+            catch (InvalidOperationException)
+            {
+                return new BasicResponse("You do not have any open Tasks right now");
+            }
+            
         }
 
-        private ICollection<Task> GetTaskList(TaskContext context, string username) => context.Users.Include(u => u.Tasks).First(x => x.Name == username).Tasks;
+        private ICollection<Task> GetTaskList(TaskContext context, string username)
+        {
+            IEnumerable<Task> tasks = context.Users.Include(u => u.Tasks).First(u => u.Name == username)
+                .Tasks.Select(t => t.Task);
+            return tasks.ToList();
+        }
     }
 }

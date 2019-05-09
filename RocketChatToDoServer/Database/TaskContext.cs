@@ -9,7 +9,17 @@ namespace RocketChatToDoServer.Database
             : base(options)
         { }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<UserTaskMap>().HasKey(x => new
+            {
+                x.TaskID,
+                x.UserID
+            });
+        }
+
         public DbSet<Task> Tasks { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<UserTaskMap> UserTaskMaps { get; set; }
     }
 }

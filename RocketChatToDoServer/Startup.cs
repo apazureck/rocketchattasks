@@ -75,8 +75,8 @@ namespace RocketChatToDoServer
                         {
                             CreationDate = DateTime.Now,
                             DueDate = dueDate ?? default,
-                            TaskDescription = taskDescription.Trim(),
-                            User = owner
+                            Title = taskDescription.Trim(),
+                            Initiator = owner
                         }).Entity;
                         tc.SaveChanges();
                         return t;

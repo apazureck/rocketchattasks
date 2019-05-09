@@ -24,7 +24,7 @@ namespace RocketChatToDoServer.TodoBot
         {
             configuration.GetSection("bots").Bind(botConfigurations);
             this.logger = logger;
-            foreach(var botconfig in botConfigurations)
+            foreach(BotConfiguration botconfig in botConfigurations)
             {
                 loginOptions.Add(new LdapLoginOption
                 {
@@ -37,17 +37,21 @@ namespace RocketChatToDoServer.TodoBot
             }
         }
 
-        public async void LoginAsync(ILoginOption loginOption)
+        public async void LoginAsync()
         {
-            foreach(RcDiBot bot in bots)
+            for(int i = 0; i < bots.Count; i++)
             {
+                RcDiBot bot = bots[i];
+
                 try
                 {
+                    ILoginOption loginOption = loginOptions[i];
+
                     await bot.ConnectAsync();
                     await bot.LoginAsync(loginOption);
                     await bot.SubscribeAsync<MentionedResponse>(Stream.NotifyUser_Notifications, (provider, b) =>
                     {
-                        var taskParser = provider.GetService<TaskParser.TaskParserService>();
+                        TaskParser.TaskParserService taskParser = provider.GetService<TaskParser.TaskParserService>();
                         taskParser.Username = b.Driver.Username;
                         return new MentionedResponse(provider.GetService<ILogger<MentionedResponse>>(), provider.GetService<TaskContext>(), taskParser);
                     }, false);

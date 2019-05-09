@@ -23,17 +23,19 @@ namespace RocketChatToDoServer.Migrations
 
                     b.Property<DateTime>("CreationDate");
 
+                    b.Property<string>("Description");
+
                     b.Property<bool>("Done");
 
                     b.Property<DateTime>("DueDate");
 
-                    b.Property<string>("TaskDescription");
+                    b.Property<int>("InitiatorID");
 
-                    b.Property<int>("UserID");
+                    b.Property<string>("Title");
 
                     b.HasKey("ID");
 
-                    b.HasIndex("UserID");
+                    b.HasIndex("InitiatorID");
 
                     b.ToTable("Tasks");
                 });
@@ -50,8 +52,34 @@ namespace RocketChatToDoServer.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("RocketChatToDoServer.Database.Models.UserTaskMap", b =>
+                {
+                    b.Property<int>("TaskID");
+
+                    b.Property<int>("UserID");
+
+                    b.HasKey("TaskID", "UserID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("UserTaskMaps");
+                });
+
             modelBuilder.Entity("RocketChatToDoServer.Database.Models.Task", b =>
                 {
+                    b.HasOne("RocketChatToDoServer.Database.Models.User", "Initiator")
+                        .WithMany()
+                        .HasForeignKey("InitiatorID")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("RocketChatToDoServer.Database.Models.UserTaskMap", b =>
+                {
+                    b.HasOne("RocketChatToDoServer.Database.Models.Task", "Task")
+                        .WithMany("Assignees")
+                        .HasForeignKey("TaskID")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("RocketChatToDoServer.Database.Models.User", "User")
                         .WithMany("Tasks")
                         .HasForeignKey("UserID")

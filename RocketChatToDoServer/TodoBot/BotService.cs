@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Rocket.Chat.Net.Bot;
@@ -33,7 +34,7 @@ namespace RocketChatToDoServer.TodoBot
                 });
 
                 // SetUp Bot
-                bots.Add(new RcDiBot(botconfig.RocketServerUrl, botconfig.UseSsl, services, logger));
+                bots.Add(new RcDiBot(botconfig.RocketServerUrl, botconfig.UseSsl, services, logger, botconfig.ResponseUrl));
             }
         }
 
@@ -53,7 +54,7 @@ namespace RocketChatToDoServer.TodoBot
                     {
                         TaskParser.TaskParserService taskParser = provider.GetService<TaskParser.TaskParserService>();
                         taskParser.Username = b.Driver.Username;
-                        return new MentionedResponse(provider.GetService<ILogger<MentionedResponse>>(), provider.GetService<TaskContext>(), taskParser);
+                        return new MentionedResponse(provider.GetService<ILogger<MentionedResponse>>(), provider.GetService<TaskContext>(), taskParser, bot.ResponseUrl);
                     }, false);
                 }
                 catch (Exception ex)
@@ -70,5 +71,9 @@ namespace RocketChatToDoServer.TodoBot
         public string Password { get; set; }
         public string RocketServerUrl { get; set; }
         public bool UseSsl { get; set; }
+        /// <summary>
+        /// This is the base url to the services on the server endpoint of the todo server.
+        /// </summary>
+        public string ResponseUrl { get; set; }
     }
 }

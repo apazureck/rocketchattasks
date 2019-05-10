@@ -19,5 +19,21 @@ namespace RocketChatToDoServer.Controllers
         {
             return context.Tasks.AsQueryable();
         }
+
+        [HttpGet("setDone/{taskId}")]
+        public IActionResult SetDone(int taskId)
+        {
+            var taskToSetToDone = context.Tasks.FirstOrDefault(t => t.ID == taskId);
+            if(taskToSetToDone != null)
+            {
+                taskToSetToDone.Done = true;
+                context.Update(taskToSetToDone);
+                context.SaveChanges();
+                return Ok($"Task {taskToSetToDone.Title} was set to done");
+            } else
+            {
+                return NotFound();
+            }
+        }
     }
 }

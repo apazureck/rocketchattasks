@@ -21,10 +21,11 @@ namespace RocketChatToDoServer.TodoBot.Responses
         private readonly TaskContext context;
         private readonly TaskParser.TaskParserService parserService;
         private const string TASKTEMPLATENAME = "TaskTemplate";
-        private const string DEFAULTTASKTEMPLATE = "**{{ID}}**: {{Title}}{{NotDefaultDate DueDate}} - Due: {{DueDate}}{{/NotDefaultDate}}";
+        private const string DEFAULTTASKTEMPLATE = "**{{Task.ID}}**: {{Task.Title}}{{NotDefaultDate Task.DueDate}} - Due: {{Task.DueDate}}{{/NotDefaultDate}} ([Done]({{DoneLink}}))";
         private const string DEFAULTTASKLISTTEMPLATE = "**Your open Tasks:**\n{{#each this}}{{> " + TASKTEMPLATENAME + "}}\n{{/each}}";
 
         private static Func<object, string> TaskListTemplate { get; set; }
+        public string ResponseUrl { get; }
 
         static MentionedResponse()
         {
@@ -56,11 +57,12 @@ namespace RocketChatToDoServer.TodoBot.Responses
             TaskListTemplate = Handlebars.Compile(DEFAULTTASKLISTTEMPLATE);
         }
 
-        public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context, TaskParser.TaskParserService parserService)
+        public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context, TaskParser.TaskParserService parserService, string responseUrl = null)
         {
             this.logger = logger;
             this.context = context;
             this.parserService = parserService;
+            ResponseUrl = responseUrl;
         }
         protected override IMessageResponse RespondTo(NotifyUserMessageArgument input)
         {
@@ -152,8 +154,12 @@ namespace RocketChatToDoServer.TodoBot.Responses
                 IEnumerable<Task> tl = GetTaskList(context, input.Title.Substring(1)).Where(x => !x.Done).ToList();
                 if (tl.Count() < 1)
                     throw new InvalidOperationException("Tasklist is empty");
-                string rs = tl.Select(t => t.ID + " " + t.Title + (t.DueDate != default ? "; DUE: " + t.DueDate : "")).Aggregate("", (a, b) => a + $"\n- " + b);
-                return new BasicResponse(TaskListTemplate(tl));
+                
+                return new BasicResponse(TaskListTemplate(tl.Select(x => new
+                {
+                    Task = x,
+                    DoneLink = ResponseUrl + $"/Tasks/setDone/{x.ID}"
+                })));
             }
             catch (InvalidOperationException)
             {

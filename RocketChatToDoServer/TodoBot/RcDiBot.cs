@@ -15,13 +15,14 @@ namespace RocketChatToDoServer.TodoBot
         private IServiceProvider provider;
         private readonly IServiceCollection services;
 
-        public RcDiBot(string url, bool useSsl, IServiceCollection services, ILogger logger = null)
-            : this(new RocketChatDriver(url, useSsl, logger), logger, services)
+        public RcDiBot(string url, bool useSsl, IServiceCollection services, ILogger logger = null, string responseAddress = null)
+            : this(new RocketChatDriver(url, useSsl, logger), logger, services, responseAddress)
         {
         }
 
-        public RcDiBot(IRocketChatDriver driver, ILogger logger, IServiceCollection services) : base(driver, logger)
+        public RcDiBot(IRocketChatDriver driver, ILogger logger, IServiceCollection services, string responseAddress = null) : base(driver, logger)
         {
+            ResponseUrl = responseAddress;
             this.services = services;
         }
 
@@ -37,6 +38,8 @@ namespace RocketChatToDoServer.TodoBot
         }
 
         private Dictionary<string, Type> responses = new Dictionary<string, Type>();
+
+        public string ResponseUrl { get; }
 
         override protected async Task ProcessRequest(string subscriptionId, List<Newtonsoft.Json.Linq.JObject> fields)
         {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RocketChatToDoServer.Database;
 using RocketChatToDoServer.Database.Models;
 using System.Linq;
@@ -23,7 +24,7 @@ namespace RocketChatToDoServer.Controllers
         [HttpGet("setDone/{taskId}")]
         public IActionResult SetDone(int taskId)
         {
-            var taskToSetToDone = context.Tasks.FirstOrDefault(t => t.ID == taskId);
+            Task taskToSetToDone = context.Tasks.FirstOrDefault(t => t.ID == taskId);
             if(taskToSetToDone != null)
             {
                 taskToSetToDone.Done = true;
@@ -34,6 +35,15 @@ namespace RocketChatToDoServer.Controllers
             {
                 return NotFound();
             }
+        }
+
+        [HttpGet("forUser/{userId}")]
+        public IQueryable<Task> GetOpenTasksForUser(int userId)
+        {
+            User user = context.Users.Include(x => x.Tasks)
+                .ThenInclude(y => y.Task)
+                .First(x => x.ID == userId);
+            return user.Tasks.Select(x => x.Task).Where(x => !x.Done).AsQueryable();
         }
     }
 }

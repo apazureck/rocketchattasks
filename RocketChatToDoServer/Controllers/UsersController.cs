@@ -24,5 +24,11 @@ namespace RocketChatToDoServer.Controllers
         {
             return context.Users.AsQueryable();
         }
+
+        [HttpGet("{id}")]
+        public User Get(int id)
+        {
+            return context.Users.First(x => x.ID == id);
+        }
     }
 }

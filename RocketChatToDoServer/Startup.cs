@@ -45,7 +45,9 @@ namespace RocketChatToDoServer
             services.AddDbContext<TaskContext>
                 (options => options.UseSqlite(connection));
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddJsonOptions(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>

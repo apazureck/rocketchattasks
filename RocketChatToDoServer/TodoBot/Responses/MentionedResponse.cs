@@ -22,7 +22,7 @@ namespace RocketChatToDoServer.TodoBot.Responses
         private readonly TaskParser.TaskParserService parserService;
         private const string TASKTEMPLATENAME = "TaskTemplate";
         private const string DEFAULTTASKTEMPLATE = "**{{Task.ID}}**: {{Task.Title}}{{NotDefaultDate Task.DueDate}} - Due: {{Task.DueDate}}{{/NotDefaultDate}} ([Done]({{DoneLink}}))";
-        private const string DEFAULTTASKLISTTEMPLATE = "**Your open Tasks:**\n{{#each this}}{{> " + TASKTEMPLATENAME + "}}\n{{/each}}";
+        private const string DEFAULTTASKLISTTEMPLATE = "**[Your open Tasks]({{userTaskLink}}):**\n{{#each tasks}}{{> " + TASKTEMPLATENAME + "}}\n{{/each}}";
 
         private static Func<object, string> TaskListTemplate { get; set; }
         public string ResponseUrl { get; }
@@ -151,15 +151,20 @@ namespace RocketChatToDoServer.TodoBot.Responses
         {
             try
             {
-                IEnumerable<Task> tl = GetTaskList(context, input.Title.Substring(1)).Where(x => !x.Done).ToList();
+                User user = context.Users.First(u => u.Name == input.Title.Substring(1));
+                IEnumerable<Task> tl = GetTaskList(context, user).Where(x => !x.Done).ToList();
                 if (tl.Count() < 1)
                     throw new InvalidOperationException("Tasklist is empty");
                 
-                return new BasicResponse(TaskListTemplate(tl.Select(x => new
+                return new BasicResponse(TaskListTemplate(new
                 {
-                    Task = x,
-                    DoneLink = ResponseUrl + $"/Tasks/setDone/{x.ID}"
-                })));
+                    tasks = tl.Select(x => new
+                    {
+                        Task = x,
+                        DoneLink = ResponseUrl + $"api/Tasks/setDone/{x.ID}"
+                    }),
+                    userTaskLink = ResponseUrl + $"/users/{user.ID}"
+                }));
             }
             catch (InvalidOperationException)
             {
@@ -168,9 +173,8 @@ namespace RocketChatToDoServer.TodoBot.Responses
             
         }
 
-        private ICollection<Task> GetTaskList(TaskContext context, string username)
+        private ICollection<Task> GetTaskList(TaskContext context, User user)
         {
-            User user = context.Users.First(u => u.Name == username);
             IQueryable<UserTaskMap> utmaps = context.UserTaskMaps.Include(utm => utm.Task).Where(utm => utm.UserID == user.ID);
             List<Task> tl = utmaps.Select(utm => utm.Task).ToList();
             return tl;

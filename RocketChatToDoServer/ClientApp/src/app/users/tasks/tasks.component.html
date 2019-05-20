@@ -1,0 +1,30 @@
+<h1>
+  Tasks for user <span *ngIf="user">{{ user.name }}</span>
+</h1>
+
+<p>Hello, <span *ngIf="user">{{ user.name }}</span>. Here are your open Tasks:</p>
+
+<p *ngIf="!tasks"><em>Loading...</em></p>
+
+<table class='table' *ngIf="tasks">
+  <thead>
+    <tr>
+      <th>
+        ID
+      </th>
+      <th>
+        Title
+      </th>
+      <th>
+        Done
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let task of tasks">
+      <td>{{ task.id }}</td>
+      <td>{{ task.title }}</td>
+      <td>{{ task.done }}</td>
+    </tr>
+  </tbody>
+</table>

@@ -161,7 +161,7 @@ namespace RocketChatToDoServer.TodoBot.Responses
                     tasks = tl.Select(x => new
                     {
                         Task = x,
-                        DoneLink = ResponseUrl + $"api/Tasks/setDone/{x.ID}"
+                        DoneLink = ResponseUrl + $"/users/{user.ID}/setDone/{x.ID}"
                     }),
                     userTaskLink = ResponseUrl + $"/users/{user.ID}"
                 }));

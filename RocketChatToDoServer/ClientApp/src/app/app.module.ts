@@ -31,7 +31,8 @@ import { TasksComponent } from './users/tasks/tasks.component';
       { path: 'counter', component: CounterComponent },
       { path: 'fetch-data', component: FetchDataComponent },
       { path: 'users', component: UsersComponent },
-      { path: 'users/:userId', component: TasksComponent }
+      { path: 'users/:userId', component: TasksComponent },
+      { path: 'users/:userId/setDone/:taskId', component: TasksComponent }
     ])
   ],
   providers: [],

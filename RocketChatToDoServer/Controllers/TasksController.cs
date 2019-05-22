@@ -25,6 +25,17 @@ namespace RocketChatToDoServer.Controllers
         [HttpGet("forUser/{userId:int}/setDone/{taskId:int}")]
         public Task SetDone(int userId, int taskId)
         {
+            return SetTaskTo(userId, taskId, true);
+        }
+
+        [HttpGet("forUser/{userId:int}/setUndone/{taskId:int}")]
+        public Task SetUndone(int userId, int taskId)
+        {
+            return SetTaskTo(userId, taskId, false);
+        }
+
+        private Task SetTaskTo(int userId, int taskId, bool done)
+        {
             User assignee = context.Users.FirstOrDefault(t => t.ID == userId);
             if (assignee == null)
                 throw new ArgumentException($"User with ID {userId} was not found");
@@ -37,7 +48,7 @@ namespace RocketChatToDoServer.Controllers
             if (taskToSetToDone.InitiatorID != userId && !taskToSetToDone.Assignees.Any(tum => tum.UserID == userId))
                 throw new InvalidOperationException("User is neither assigned nor the initiator of this task, cannot set to done.");
 
-            taskToSetToDone.Done = true;
+            taskToSetToDone.Done = done;
             context.Update(taskToSetToDone);
             context.SaveChanges();
             return taskToSetToDone;

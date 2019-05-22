@@ -2,11 +2,11 @@
   Tasks for user <span *ngIf="user">{{ user.name }}</span>
 </h1>
 
-<p>Hello, <span *ngIf="user">{{ user.name }}</span>. Here are your open Tasks:</p>
+<p>Hello, <span *ngIf="user">{{ user.name }}</span>. <span *ngIf="tasks && tasks.length < 1; else elseBlock">You have no open tasks.</span><ng-template #elseBlock>Here are your open tasks:</ng-template></p>
 
 <p *ngIf="!tasks"><em>Loading...</em></p>
 
-<table class='table' *ngIf="tasks">
+<table class='table' *ngIf="tasks && tasks.length > 0">
   <thead>
     <tr>
       <th>
@@ -29,7 +29,7 @@
   <tbody>
     <tr *ngFor="let task of tasks">
       <td>{{ task.id }}</td>
-      <td><mat-checkbox>Checkbox</mat-checkbox>{{ task.done }}</td>
+      <td><mat-checkbox [checked]="task.done" (change)="changeTaskActive(task.id,$event)">Done</mat-checkbox></td>
       <td>{{ task.title }}</td>
       <td>{{ task.dueDate }}</td>
       <td>

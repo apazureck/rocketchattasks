@@ -31,17 +31,27 @@ export class TasksComponent {
         that.tasks = res;
         that.getDoneTask();
       }, error => console.error(error));
-   }
+  }
 
-   getDoneTask() {
-     if (this.setTaskDoneId && this.user && this.tasks) {
-      this.http.get('api/tasks/forUser/' + this.user.id + '/setDone/' + this.setTaskDoneId).subscribe(res => {
-        const donetask = this.tasks.find(t => t.id === this.setTaskDoneId);
-        if (donetask) {
-          donetask.done = true;
-        }
-      }, error => console.error(error));
+  getDoneTask() {
+    if (this.setTaskDoneId && this.user && this.tasks) {
+      this.setTaskToDone(this.setTaskDoneId, true);
     }
-   }
+  }
 
+  changeTaskActive(taskId: number, event: { checked: boolean }) {
+    this.setTaskToDone(taskId, event.checked);
+  }
+
+  private setTaskToDone(taskId: number, done: boolean) {
+    const donetask = this.tasks.find(t => t.id === taskId);
+    if (donetask && donetask.done == done)
+      return;
+
+    this.http.get('api/tasks/forUser/' + this.user.id + '/' + (done ? 'setDone' : 'setUndone') + '/' + taskId).subscribe(res => {
+      if (donetask) {
+        donetask.done = true;
+      }
+    }, error => console.error(error));
+  }
 }

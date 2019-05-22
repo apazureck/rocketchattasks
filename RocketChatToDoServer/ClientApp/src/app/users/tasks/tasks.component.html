@@ -29,7 +29,7 @@
   <tbody>
     <tr *ngFor="let task of tasks">
       <td>{{ task.id }}</td>
-      <td>{{ task.done }}</td>
+      <td><mat-checkbox>Checkbox</mat-checkbox>{{ task.done }}</td>
       <td>{{ task.title }}</td>
       <td>{{ task.dueDate }}</td>
       <td>

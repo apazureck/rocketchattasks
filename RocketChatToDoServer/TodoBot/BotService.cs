@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace RocketChatToDoServer.TodoBot
 {
-    public class BotService
+    public class BotService : IPrivateMessenger
     {
         private readonly ILogger<BotService> logger;
 
@@ -60,7 +60,7 @@ namespace RocketChatToDoServer.TodoBot
                     {
                         TaskParser.TaskParserService taskParser = provider.GetService<TaskParser.TaskParserService>();
                         taskParser.Username = b.Driver.Username;
-                        return new MentionedResponse(provider.GetService<ILogger<MentionedResponse>>(), provider.GetService<TaskContext>(), taskParser, bot.ResponseUrl);
+                        return new MentionedResponse(provider.GetService<ILogger<MentionedResponse>>(), provider.GetService<TaskContext>(), taskParser, this, bot.ResponseUrl);
                     }, false);
                 }
                 catch (Exception ex)

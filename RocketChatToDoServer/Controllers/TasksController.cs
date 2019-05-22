@@ -55,13 +55,13 @@ namespace RocketChatToDoServer.Controllers
             context.Update(taskToSetToDone);
             context.SaveChanges();
 
-            SendDoneMessage(taskId, done, assignee);
+            SendDoneMessage(taskToSetToDone, done, assignee);
             return taskToSetToDone;
         }
 
-        private async void SendDoneMessage(int taskId, bool done, User assignee)
+        private async void SendDoneMessage(Task task, bool done, User assignee)
         {
-            await botService.SendMessageToUser(assignee.ID, $"Task {taskId} is " + (done ? "done" : "not done"));
+            await botService.SendMessageToUser(assignee.ID, $"Task {task.ID}: *{task.Title}* is " + (done ? "done" : "not done"));
         }
 
         [HttpGet("forUser/{userId}")]

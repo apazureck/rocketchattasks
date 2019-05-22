@@ -20,6 +20,7 @@ namespace RocketChatToDoServer.TodoBot.Responses
         private readonly ILogger logger;
         private readonly TaskContext context;
         private readonly TaskParser.TaskParserService parserService;
+        private readonly IPrivateMessenger messenger;
         private const string TASKTEMPLATENAME = "TaskTemplate";
         private const string DEFAULTTASKTEMPLATE = "**{{Task.ID}}**: {{Task.Title}}{{NotDefaultDate Task.DueDate}} - Due: {{Task.DueDate}}{{/NotDefaultDate}} ([Done]({{DoneLink}}))";
         private const string DEFAULTTASKLISTTEMPLATE = "**[Your open Tasks]({{userTaskLink}}):**\n{{#each tasks}}{{> " + TASKTEMPLATENAME + "}}\n{{/each}}";
@@ -57,11 +58,12 @@ namespace RocketChatToDoServer.TodoBot.Responses
             TaskListTemplate = Handlebars.Compile(DEFAULTTASKLISTTEMPLATE);
         }
 
-        public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context, TaskParser.TaskParserService parserService, string responseUrl = null)
+        public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context, TaskParser.TaskParserService parserService, IPrivateMessenger messenger, string responseUrl = null)
         {
             this.logger = logger;
             this.context = context;
             this.parserService = parserService;
+            this.messenger = messenger;
             ResponseUrl = responseUrl;
         }
         protected override IMessageResponse RespondTo(NotifyUserMessageArgument input)
@@ -83,6 +85,11 @@ namespace RocketChatToDoServer.TodoBot.Responses
             Task t = parserService.GetTask(input.Payload.Sender.Name, input.Payload.Message.Msg);
             if(t != null)
             {
+                messenger.SendMessageToUser(t.InitiatorID, $"You assigned Task {t.ID} to " + t.Assignees.Select(x => "@" + x.User.Name).Aggregate((a,b) => a + ", " + b));
+                foreach(var assignee in t.Assignees)
+                {
+                    messenger.SendMessageToUser(assignee.UserID, $"Task {t.ID} has been assigned to you by @" + t.Initiator.Name);
+                }
                 return new BasicResponse($"Created Task {t.ID}: {t.Title}", input.Payload.RoomId);
             } else
             {

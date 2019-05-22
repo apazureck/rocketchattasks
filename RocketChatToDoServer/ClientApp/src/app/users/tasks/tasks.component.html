@@ -13,18 +13,30 @@
         ID
       </th>
       <th>
+        Done
+      </th>
+      <th>
         Title
       </th>
       <th>
-        Done
+        Due Date
+      </th>
+      <th>
+        Assignees
       </th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let task of tasks">
       <td>{{ task.id }}</td>
-      <td>{{ task.title }}</td>
       <td>{{ task.done }}</td>
+      <td>{{ task.title }}</td>
+      <td>{{ task.dueDate }}</td>
+      <td>
+        <ul *ngFor="let assignee of task.assignees">
+          <li>{{ assignee.user.name }}</li>
+      </ul>
+    </td>
     </tr>
   </tbody>
 </table>

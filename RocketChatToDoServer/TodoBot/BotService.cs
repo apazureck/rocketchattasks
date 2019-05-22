@@ -9,6 +9,7 @@ using RocketChatToDoServer.Database;
 using RocketChatToDoServer.TodoBot.Responses;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace RocketChatToDoServer.TodoBot
@@ -36,6 +37,11 @@ namespace RocketChatToDoServer.TodoBot
                 // SetUp Bot
                 bots.Add(new RcDiBot(botconfig.RocketServerUrl, botconfig.UseSsl, services, logger, botconfig.ResponseUrl));
             }
+        }
+
+        public async Task SendMessageToUser(int userId, string message)
+        {
+            await bots.First().SendMessageAsync(message, userId);
         }
 
         public async void LoginAsync()

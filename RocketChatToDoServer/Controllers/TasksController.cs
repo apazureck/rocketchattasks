@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using RocketChatToDoServer.Database;
 using RocketChatToDoServer.Database.Models;
+using RocketChatToDoServer.TodoBot;
 using System;
 using System.Linq;
 
@@ -12,10 +13,12 @@ namespace RocketChatToDoServer.Controllers
     public class TasksController : ControllerBase
     {
         private readonly TaskContext context;
+        private readonly BotService botService;
 
-        public TasksController(TaskContext context)
+        public TasksController(TaskContext context, BotService botService)
         {
             this.context = context;
+            this.botService = botService;
         }
         public IQueryable<Task> Get()
         {
@@ -51,7 +54,14 @@ namespace RocketChatToDoServer.Controllers
             taskToSetToDone.Done = done;
             context.Update(taskToSetToDone);
             context.SaveChanges();
+
+            SendDoneMessage(taskId, done, assignee);
             return taskToSetToDone;
+        }
+
+        private async void SendDoneMessage(int taskId, bool done, User assignee)
+        {
+            await botService.SendMessageToUser(assignee.ID, $"Task {taskId} is " + (done ? "done" : "not done"));
         }
 
         [HttpGet("forUser/{userId}")]

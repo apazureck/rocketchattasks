@@ -50,7 +50,7 @@ export class TasksComponent {
 
     this.http.get('api/tasks/forUser/' + this.user.id + '/' + (done ? 'setDone' : 'setUndone') + '/' + taskId).subscribe(res => {
       if (donetask) {
-        donetask.done = true;
+        donetask.done = done;
       }
     }, error => console.error(error));
   }

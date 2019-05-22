@@ -7,6 +7,8 @@ using Rocket.Chat.Net.Driver;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Rocket.Chat.Net.Bot.Interfaces;
+using RocketChatToDoServer.Database;
+using System.Linq;
 
 namespace RocketChatToDoServer.TodoBot
 {
@@ -40,6 +42,17 @@ namespace RocketChatToDoServer.TodoBot
         private Dictionary<string, Type> responses = new Dictionary<string, Type>();
 
         public string ResponseUrl { get; }
+
+        internal async Task SendMessageAsync(string message, int userId)
+        {
+            using(IServiceScope scope = provider.CreateScope())
+            {
+                TaskContext context = scope.ServiceProvider.GetService<TaskContext>();
+                Database.Models.User user = context.Users.First(u => u.ID == userId);
+                var pm = await Driver.CreatePrivateMessageAsync(user.Name);
+                var result = await Driver.SendMessageAsync(message, pm.Result.RoomId);
+            }
+        }
 
         override protected async Task ProcessRequest(string subscriptionId, List<Newtonsoft.Json.Linq.JObject> fields)
         {

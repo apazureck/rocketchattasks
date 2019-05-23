@@ -16,11 +16,13 @@ namespace RocketChatToDoServer.Controllers
     {
         private readonly TaskContext context;
         private readonly BotService botService;
+        private readonly string responseUrl;
 
         public TasksController(TaskContext context, BotService botService, IConfiguration config)
         {
             this.context = context;
             this.botService = botService;
+            responseUrl = config.GetSection("bots").Get<BotConfiguration[]>()[0].ResponseUrl;
         }
         public IQueryable<Task> Get()
         {
@@ -69,7 +71,7 @@ namespace RocketChatToDoServer.Controllers
 
         private async void SendDoneMessage(Task task, bool done, User assignee)
         {
-            await botService.SendMessageToUser(assignee.ID, $"[Task {task.ID}]({Url+"/tasks/"+task.ID}): *{task.Title}* is " + (done ? "done" : "not done"));
+            await botService.SendMessageToUser(assignee.ID, $"[Task {task.ID}]({responseUrl+"/tasks/"+task.ID}): *{task.Title}* is " + (done ? "done" : "not done"));
         }
 
         [HttpGet("forUser/{userId}")]

@@ -22,7 +22,7 @@ namespace RocketChatToDoServer.TodoBot.Responses
         private readonly TaskParser.TaskParserService parserService;
         private readonly IPrivateMessenger messenger;
         private const string TASKTEMPLATENAME = "TaskTemplate";
-        private const string DEFAULTTASKTEMPLATE = "**{{Task.ID}}**: {{Task.Title}}{{NotDefaultDate Task.DueDate}} - Due: {{Task.DueDate}}{{/NotDefaultDate}} ([Done]({{DoneLink}}))";
+        private const string DEFAULTTASKTEMPLATE = "**[{{Task.ID}}]({{TaskLink}})**: {{Task.Title}}{{NotDefaultDate Task.DueDate}} - Due: {{Task.DueDate}}{{/NotDefaultDate}} ([Done]({{DoneLink}}))";
         private const string DEFAULTTASKLISTTEMPLATE = "**[Your open Tasks]({{userTaskLink}}):**\n{{#each tasks}}{{> " + TASKTEMPLATENAME + "}}\n{{/each}}";
 
         private static Func<object, string> TaskListTemplate { get; set; }
@@ -85,18 +85,27 @@ namespace RocketChatToDoServer.TodoBot.Responses
             Task t = parserService.GetTask(input.Payload.Sender.Name, input.Payload.Message.Msg);
             if(t != null)
             {
-                messenger.SendMessageToUser(t.InitiatorID, $"You assigned Task {t.ID} to " + t.Assignees.Select(x => "@" + x.User.Name).Aggregate((a,b) => a + ", " + b));
-                foreach(var assignee in t.Assignees)
+                if (t.Assignees.Count == 1 && t.Assignees.First().UserID == t.InitiatorID)
+                    messenger.SendMessageToUser(t.InitiatorID, $"You assigned Task {t.ID} to yourself");
+                else
+                    messenger.SendMessageToUser(t.InitiatorID, $"You assigned Task {t.ID} to " + t.Assignees.Select(x => x.UserID != t.InitiatorID ? "@" + x.User.Name : "yourself").Aggregate((a, b) => a + ", " + b));
+                foreach (var assignee in t.Assignees)
                 {
-                    messenger.SendMessageToUser(assignee.UserID, $"Task {t.ID} has been assigned to you by @" + t.Initiator.Name);
+                    if (assignee.UserID != t.InitiatorID)
+                        messenger.SendMessageToUser(assignee.UserID, $"Task {t.ID} has been assigned to you by @" + t.Initiator.Name);
                 }
-                return new BasicResponse($"Created Task {t.ID}: {t.Title}", input.Payload.RoomId);
-            } else
+                return new BasicResponse($"Created [Task {t.ID}]({CreateTaskUrl(t)}): {t.Title}", input.Payload.RoomId);
+            }
+            else
             {
                 // todo: Write a more informing error message how the user can create a task
                 return new BasicResponse("Did not understand", input.Payload.RoomId);
             }
         }
+
+        private string CreateTaskUrl(Task t) => $"{ResponseUrl}/tasks/{t.ID}";
+
+        private string CreateDoneUrl(Task x, User user) => ResponseUrl + $"/users/{user.ID}/setDone/{x.ID}";
 
         private IMessageResponse RespondToDirectMessage(NotifyUserMessageArgument input)
         {
@@ -162,13 +171,14 @@ namespace RocketChatToDoServer.TodoBot.Responses
                 IEnumerable<Task> tl = GetTaskList(context, user).Where(x => !x.Done).ToList();
                 if (tl.Count() < 1)
                     throw new InvalidOperationException("Tasklist is empty");
-                
+
                 return new BasicResponse(TaskListTemplate(new
                 {
                     tasks = tl.Select(x => new
                     {
                         Task = x,
-                        DoneLink = ResponseUrl + $"/users/{user.ID}/setDone/{x.ID}"
+                        DoneLink = CreateDoneUrl(x, user),
+                        TaskLink = this.CreateTaskUrl(x)
                     }),
                     userTaskLink = ResponseUrl + $"/users/{user.ID}"
                 }));

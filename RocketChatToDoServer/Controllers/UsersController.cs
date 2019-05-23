@@ -20,15 +20,9 @@ namespace RocketChatToDoServer.Controllers
             this.context = context;
         }
 
-        public IQueryable<User> Get()
-        {
-            return context.Users.AsQueryable();
-        }
+        public IQueryable<User> Get() => context.Users.AsQueryable();
 
         [HttpGet("{id}")]
-        public User Get(int id)
-        {
-            return context.Users.First(x => x.ID == id);
-        }
+        public User Get(int id) => context.Users.First(x => x.ID == id);
     }
 }

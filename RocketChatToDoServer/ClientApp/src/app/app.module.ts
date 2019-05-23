@@ -1,10 +1,19 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {MatButtonModule, MatCheckboxModule} from '@angular/material';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {
+  MatButtonModule,
+  MatCheckboxModule,
+  MatInputModule,
+  MatDatepickerModule,
+  MatFormFieldModule,
+  MatNativeDateModule,
+  MatChipsModule,
+  MatIconModule
+} from '@angular/material';
 
 import { AppComponent } from './app.component';
 import { NavMenuComponent } from './nav-menu/nav-menu.component';
@@ -30,6 +39,15 @@ import { TaskDetailComponent } from './tasks/taskdetail/taskdetail.component';
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     BrowserAnimationsModule,
     MatButtonModule, MatCheckboxModule,
+    MatInputModule,
+    MatButtonModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatNativeDateModule,
+    MatChipsModule,
+    MatIconModule,
+    FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     FormsModule,
     RouterModule.forRoot([
@@ -42,7 +60,7 @@ import { TaskDetailComponent } from './tasks/taskdetail/taskdetail.component';
       { path: 'tasks/:taskId', component: TaskDetailComponent }
     ])
   ],
-  providers: [],
+  providers: [ MatDatepickerModule ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

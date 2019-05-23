@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using RocketChatToDoServer.Database;
 using RocketChatToDoServer.Database.Models;
 using RocketChatToDoServer.TodoBot;
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace RocketChatToDoServer.Controllers
 {
@@ -15,7 +17,7 @@ namespace RocketChatToDoServer.Controllers
         private readonly TaskContext context;
         private readonly BotService botService;
 
-        public TasksController(TaskContext context, BotService botService)
+        public TasksController(TaskContext context, BotService botService, IConfiguration config)
         {
             this.context = context;
             this.botService = botService;
@@ -23,6 +25,12 @@ namespace RocketChatToDoServer.Controllers
         public IQueryable<Task> Get()
         {
             return context.Tasks.AsQueryable();
+        }
+
+        [HttpGet("{id}")]
+        public Task Get(int id)
+        {
+            return context.Tasks.Include(x=> x.Assignees).Include(x => x.Initiator).First(x => x.ID == id);
         }
 
         [HttpGet("forUser/{userId:int}/setDone/{taskId:int}")]
@@ -61,7 +69,7 @@ namespace RocketChatToDoServer.Controllers
 
         private async void SendDoneMessage(Task task, bool done, User assignee)
         {
-            await botService.SendMessageToUser(assignee.ID, $"Task {task.ID}: *{task.Title}* is " + (done ? "done" : "not done"));
+            await botService.SendMessageToUser(assignee.ID, $"[Task {task.ID}]({Url+"/tasks/"+task.ID}): *{task.Title}* is " + (done ? "done" : "not done"));
         }
 
         [HttpGet("forUser/{userId}")]

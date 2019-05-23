@@ -1,0 +1,56 @@
+<h2>Task {{task.id}}: {{task.title}}</h2>
+
+<table>
+  <tr>
+    <th>
+      Assigned by
+    </th>
+    <td>
+      {{task.initiator.name}}
+    </td>
+  </tr>
+  <tr>
+      <th>
+        Creation Date
+      </th>
+      <td>
+        {{task.creationDate}}
+      </td>
+    </tr>
+  <tr>
+    <th>
+      Due Date
+    </th>
+    <td>
+      {{task.dueDate}}
+    </td>
+  </tr>
+  <tr>
+    <th>
+      Description
+    </th>
+    <td>
+      {{task.description}}
+    </td>
+  </tr>
+  <tr>
+    <th>
+      Assignees
+    </th>
+    <td>
+      <ul *ngFor="let assignee of task.assignees">
+        <li>
+          {{ assignee.user.name }}
+        </li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      
+    </th>
+    <mat-checkbox [checked]="task.done">
+      Done
+    </mat-checkbox>
+  </tr>
+</table>

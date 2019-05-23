@@ -13,6 +13,7 @@ import { CounterComponent } from './counter/counter.component';
 import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { UsersComponent } from './users/users.component';
 import { TasksComponent } from './users/tasks/tasks.component';
+import { TaskDetailComponent } from './tasks/taskdetail/taskdetail.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { TasksComponent } from './users/tasks/tasks.component';
     CounterComponent,
     FetchDataComponent,
     UsersComponent,
-    TasksComponent
+    TasksComponent,
+    TaskDetailComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -36,7 +38,8 @@ import { TasksComponent } from './users/tasks/tasks.component';
       { path: 'fetch-data', component: FetchDataComponent },
       { path: 'users', component: UsersComponent },
       { path: 'users/:userId', component: TasksComponent },
-      { path: 'users/:userId/setDone/:taskId', component: TasksComponent }
+      { path: 'users/:userId/setDone/:taskId', component: TasksComponent },
+      { path: 'tasks/:taskId', component: TaskDetailComponent }
     ])
   ],
   providers: [],

@@ -24,7 +24,7 @@ interface Task {
   creationDate: Date,
   initiatorId: number,
   initiator: User,
-  assignees: UserTaskMap,
+  assignees: UserTaskMap[],
   title: string,
   description: string,
   done: boolean

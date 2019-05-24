@@ -21,8 +21,8 @@
   </mat-form-field>
   <mat-form-field>
     <mat-chip-list #assigneeList name="assignees">
-      <mat-chip *ngFor="let assignee of task.assignees" [selectable]="true" [removable]="true"
-        (removed)="remove(assignee)">
+      <mat-chip *ngFor="let assignee of task.assignees" [removable]="true"
+        (removed)="removeAssignee(assignee)">
         {{assignee.user.name}}
         <mat-icon matChipRemove>cancel</mat-icon>
       </mat-chip>

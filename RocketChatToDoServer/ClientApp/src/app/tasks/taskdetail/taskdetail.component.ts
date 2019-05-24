@@ -7,19 +7,25 @@ import { ActivatedRoute } from '@angular/router';
   templateUrl: './taskdetail.component.html',
   styleUrls: ['./taskdetail.component.css']
 })
-export class TaskDetailComponent implements OnInit {
-
+export class TaskDetailComponent {
   task: Task;
-  constructor(private http: HttpClient, @Inject('BASE_URL') baseUrl: string, private route: ActivatedRoute) {
-    const taskId = route.snapshot.paramMap.get('taskId');
+  constructor(private http: HttpClient, @Inject('BASE_URL') private baseUrl: string, private route: ActivatedRoute) {
+    const taskId = Number(route.snapshot.paramMap.get('taskId'));
+    this.getTask(taskId);
+  }
+
+  private getTask(taskId: number) {
     const that = this;
-    http.get<Task>(baseUrl + 'api/tasks/' + taskId)
-    .subscribe(res => {
-      that.task = res;
-    }, err => console.error(err));
+    this.http.get<Task>(this.baseUrl + 'api/tasks/' + taskId)
+      .subscribe(res => {
+        that.task = res;
+      }, err => console.error(err));
   }
 
-  ngOnInit() {
+  removeAssignee(assignee: UserTaskMap) {
+    const todelete = this.task.assignees.indexOf(assignee);
+    if (todelete > -1) {
+      this.task.assignees.splice(todelete);
+    }
   }
-
 }

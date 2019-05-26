@@ -90,6 +90,8 @@ namespace RocketChatToDoServer
                         tc.SaveChanges();
                         return t;
                     }));
+
+            services.AddSingleton<RocketChatCache>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -16,11 +16,13 @@ namespace RocketChatToDoServer.Controllers
     {
         private readonly TaskContext context;
         private readonly BotService botService;
+        private readonly RocketChatCache cache;
 
-        public UsersController(TaskContext context, BotService botService)
+        public UsersController(TaskContext context, BotService botService, RocketChatCache cache)
         {
             this.context = context;
             this.botService = botService;
+            this.cache = cache;
         }
 
         public IQueryable<User> Get() => context.Users.AsQueryable();
@@ -29,10 +31,17 @@ namespace RocketChatToDoServer.Controllers
         public User Get(int id) => context.Users.First(x => x.ID == id);
 
         [HttpGet("filter/{search}")]
-        public IQueryable<User> GetFilteredUsers(string search)
+        public async Task<IQueryable<User>> GetFilteredUsers(string search)
         {
             search = search.ToUpper();
-            return context.Users.Where(u => u.Name.ToUpper().Contains(search));
+            await cache.Setup();
+            return cache.Users.Where(u => u.Username.ToUpper().Contains(search)).Select(u =>
+                context.Users.FirstOrDefault(x => x.Name == u.Username) ?? new User
+                    {
+                        ID = 0,
+                        Name = u.Username,
+                        Tasks = new List<UserTaskMap>()
+                    }).AsQueryable();
         }
     }
 }

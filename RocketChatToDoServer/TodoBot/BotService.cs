@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Rocket.Chat.Net.Bot;
 using Rocket.Chat.Net.Interfaces;
+using Rocket.Chat.Net.Models;
 using Rocket.Chat.Net.Models.LoginOptions;
 using RocketChatToDoServer.Database;
 using RocketChatToDoServer.TodoBot.Responses;
@@ -68,6 +69,11 @@ namespace RocketChatToDoServer.TodoBot
                     logger.LogError(ex, "Could not login bot " + bot.Driver.Username);
                 }
             }            
+        }
+
+        internal async Task<List<FullUser>> GetUserList()
+        {
+            return await bots[0].Driver.GetUserList();
         }
     }
 

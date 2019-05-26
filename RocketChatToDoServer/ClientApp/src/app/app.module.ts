@@ -12,7 +12,8 @@ import {
   MatFormFieldModule,
   MatNativeDateModule,
   MatChipsModule,
-  MatIconModule
+  MatIconModule,
+  MatAutocompleteModule
 } from '@angular/material';
 
 import { AppComponent } from './app.component';
@@ -23,6 +24,7 @@ import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { UsersComponent } from './users/users.component';
 import { TasksComponent } from './users/tasks/tasks.component';
 import { TaskDetailComponent } from './tasks/taskdetail/taskdetail.component';
+import { TodobackendService } from './services/todobackend.service';
 
 @NgModule({
   declarations: [
@@ -46,6 +48,7 @@ import { TaskDetailComponent } from './tasks/taskdetail/taskdetail.component';
     MatNativeDateModule,
     MatChipsModule,
     MatIconModule,
+    MatAutocompleteModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
@@ -60,7 +63,7 @@ import { TaskDetailComponent } from './tasks/taskdetail/taskdetail.component';
       { path: 'tasks/:taskId', component: TaskDetailComponent }
     ])
   ],
-  providers: [ MatDatepickerModule ],
+  providers: [ MatDatepickerModule, TodobackendService ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

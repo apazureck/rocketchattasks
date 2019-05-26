@@ -1,6 +1,7 @@
 import { Component, OnInit, Inject, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
+import { TodobackendService } from '../../services/todobackend.service';
 
 @Component({
   selector: 'app-tasks',
@@ -12,8 +13,8 @@ export class TasksComponent {
   public user: User;
   private setTaskDoneId: number;
   private error: string;
-  constructor(private http: HttpClient, @Inject('BASE_URL') baseUrl: string, private route: ActivatedRoute) {
-    const userId = route.snapshot.paramMap.get('userId');
+  constructor(private http: HttpClient, private todobackendService: TodobackendService, private route: ActivatedRoute) {
+    const userId = Number(route.snapshot.paramMap.get('userId'));
     try {
       this.setTaskDoneId = Number(route.snapshot.paramMap.get('taskId'));
     } catch (error) {
@@ -21,12 +22,12 @@ export class TasksComponent {
     }
 
     const that = this;
-    http.get<User>(baseUrl + 'api/users/' + userId)
+    todobackendService.getUser(userId)
       .subscribe(res => {
         that.user = res;
         that.getDoneTask();
       }, error => console.error(error));
-    http.get<Task[]>(baseUrl + 'api/tasks/forUser/' + userId)
+    todobackendService.getTasksForUser(userId)
       .subscribe(res => {
         that.tasks = res;
         that.getDoneTask();
@@ -43,15 +44,23 @@ export class TasksComponent {
     this.setTaskToDone(taskId, event.checked);
   }
 
-  private setTaskToDone(taskId: number, done: boolean) {
-    const donetask = this.tasks.find(t => t.id === taskId);
-    if (donetask && donetask.done == done)
-      return;
+  private async setTaskToDone(taskId: number, done: boolean) {
+    try {
+      let donetask = await this.todobackendService.getTask(taskId).toPromise();
 
-    this.http.get('api/tasks/forUser/' + this.user.id + '/' + (done ? 'setDone' : 'setUndone') + '/' + taskId).subscribe(res => {
-      if (donetask) {
-        donetask.done = done;
+      if (donetask && donetask.done === done) {
+        return;
       }
-    }, error => console.error(error));
+
+      donetask = await this.todobackendService.setTaskDone(donetask.id, this.user.id).toPromise();
+      if (donetask) {
+        const tid = this.tasks.findIndex(x => x.id === donetask.id);
+        if (tid > -1) {
+          this.tasks[tid] = donetask;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
 }

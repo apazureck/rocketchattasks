@@ -12,8 +12,8 @@ interface User {
 
 interface UserTaskMap {
   id: number
-  userId: number,
-  taskId: number,
+  userID: number,
+  taskID: number,
   user: User,
   task: Task
 }

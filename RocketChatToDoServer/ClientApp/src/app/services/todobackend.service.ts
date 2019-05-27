@@ -4,7 +4,6 @@ import { Observable } from 'rxjs/Observable';
 
 @Injectable()
 export class TodobackendService {
-
   constructor(@Inject('BASE_URL') private baseUrl: string, private http: HttpClient) {
     if (!baseUrl.endsWith('/')) {
       baseUrl = baseUrl + '/';
@@ -28,6 +27,14 @@ export class TodobackendService {
   }
 
   getFilteredUserList(searchString: string) {
-    return this.http.get<User[]>(this.baseUrl + 'api/users/filter/' + searchString);
+    return this.http.get<User[]>(this.baseUrl + 'api/users/filter' + (searchString ? '/' + searchString : ''));
+  }
+
+  addAssigneeToTask(user: User, taskId: number) {
+    return this.http.post(this.baseUrl + 'api/tasks/' + taskId + '/addAssignee', user);
+  }
+
+  removeAssignee(taskID: number, userID: number) {
+    return this.http.post(this.baseUrl + 'api/tasks/' + taskID + '/removeAssignee', userID);
   }
 }

@@ -14,14 +14,14 @@ namespace RocketChatToDoServer.Database
             this.botService = botService;
         }
 
+        public async Task Setup()
+        {
+            users = await botService.GetUserList();
+        }
+
         private List<FullUser> users = new List<FullUser>();
         private readonly BotService botService;
 
         public IEnumerable<FullUser> Users => users;
-
-        internal async Task Setup()
-        {
-            users = await botService.GetUserList();
-        }
     }
 }

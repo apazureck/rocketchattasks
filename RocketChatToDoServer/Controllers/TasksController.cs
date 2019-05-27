@@ -7,6 +7,7 @@ using RocketChatToDoServer.TodoBot;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
+using Async = System.Threading.Tasks;
 
 namespace RocketChatToDoServer.Controllers
 {
@@ -32,7 +33,8 @@ namespace RocketChatToDoServer.Controllers
         [HttpGet("{id}")]
         public Task Get(int id)
         {
-            return context.Tasks.Include(x=> x.Assignees).Include(x => x.Initiator).First(x => x.ID == id);
+            var task = context.Tasks.Include(x => x.Assignees).ThenInclude(m => m.User).Include(x => x.Initiator).First(x => x.ID == id);
+            return task;
         }
 
         [HttpGet("forUser/{userId:int}/setDone/{taskId:int}")]
@@ -81,6 +83,56 @@ namespace RocketChatToDoServer.Controllers
                 .ThenInclude(y => y.Task)
                 .First(x => x.ID == userId);
             return user.Tasks.Select(x => x.Task).Where(x => !x.Done).AsQueryable();
+        }
+
+        [HttpPost("{id}/addAssignee")]
+        public async Async.Task<IActionResult> AddUserToTask(int id, [FromBody] User user)
+        {
+            Task task = context.Tasks.FirstOrDefault(t => t.ID == id);
+            User initiator = null;
+
+            if (task == null)
+                return NotFound("Task was not found");
+
+            if(user.ID == 0)
+            {
+                user = context.Users.Add(user).Entity;
+                context.SaveChanges();
+            }
+
+            try
+            {
+                context.UserTaskMaps.Add(new UserTaskMap
+                {
+                    UserID = user.ID,
+                    TaskID = id
+                });
+                context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Assignee is already assigned");
+            }
+
+            await botService.SendAssigneeMessage(user, task, initiator);
+
+            return Ok(context.Tasks.Include(t => t.Assignees).First(t => t.ID == task.ID));
+        }
+
+        [HttpPost("{id}/removeAssignee")]
+        public async Async.Task<IActionResult> RemoveUserFromTask(int id, [FromBody] int userId)
+        {
+            UserTaskMap assignee = context.UserTaskMaps.Find(id, userId);
+            User initiator = null;
+            if (assignee == null)
+                return NotFound("Assignee was not found");
+
+            context.UserTaskMaps.Remove(assignee);
+            context.SaveChanges();
+
+            await botService.SendUnAssignedMessage(context.Users.FirstOrDefault(x => x.ID == userId), context.Tasks.FirstOrDefault(x => x.ID == id), initiator);
+
+            return Ok();
         }
     }
 }

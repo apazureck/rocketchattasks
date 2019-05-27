@@ -7,18 +7,19 @@ using Rocket.Chat.Net.Interfaces;
 using Rocket.Chat.Net.Models;
 using Rocket.Chat.Net.Models.LoginOptions;
 using RocketChatToDoServer.Database;
+using RocketChatToDoServer.Database.Models;
 using RocketChatToDoServer.TodoBot.Responses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using Tasks = System.Threading.Tasks;
 
 namespace RocketChatToDoServer.TodoBot
 {
     public class BotService : IPrivateMessenger
     {
         private readonly ILogger<BotService> logger;
-
+        private readonly RocketChatCache cache;
         private readonly List<BotConfiguration> botConfigurations = new List<BotConfiguration>();
         private readonly List<RcDiBot> bots = new List<RcDiBot>();
         private readonly List<ILoginOption> loginOptions = new List<ILoginOption>();
@@ -27,7 +28,7 @@ namespace RocketChatToDoServer.TodoBot
         {
             configuration.GetSection("bots").Bind(botConfigurations);
             this.logger = logger;
-            foreach(BotConfiguration botconfig in botConfigurations)
+            foreach (BotConfiguration botconfig in botConfigurations)
             {
                 loginOptions.Add(new LdapLoginOption
                 {
@@ -40,12 +41,12 @@ namespace RocketChatToDoServer.TodoBot
             }
         }
 
-        public async Task SendMessageToUser(int userId, string message)
+        public async Tasks.Task SendMessageToUser(int userId, string message)
         {
             await bots.First().SendMessageAsync(message, userId);
         }
 
-        public async void LoginAsync()
+        public async Tasks.Task LoginAsync()
         {
             for(int i = 0; i < bots.Count; i++)
             {
@@ -71,9 +72,19 @@ namespace RocketChatToDoServer.TodoBot
             }            
         }
 
-        internal async Task<List<FullUser>> GetUserList()
+        internal async Tasks.Task<List<FullUser>> GetUserList()
         {
             return await bots[0].Driver.GetUserList();
+        }
+
+        public async Tasks.Task SendAssigneeMessage(Database.Models.User user, Database.Models.Task task, Database.Models.User initiator)
+        {
+            await SendMessageToUser(user.ID, $"You have ben assigned to **Task {task.ID}**: {task.Title}.");
+        }
+
+        public async Tasks.Task SendUnAssignedMessage(Database.Models.User user, Database.Models.Task task, Database.Models.User initiator)
+        {
+            await SendMessageToUser(user.ID, $"Your assignment to **Task {task.ID}**: {task.Title} has been removed.");
         }
     }
 

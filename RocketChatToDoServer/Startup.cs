@@ -98,7 +98,9 @@ namespace RocketChatToDoServer
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             // Connect Bot
-            app.ApplicationServices.GetService<BotService>().LoginAsync();
+            app.ApplicationServices.GetService<BotService>().LoginAsync()
+                .ContinueWith((task) => app.ApplicationServices.GetService<RocketChatCache>().Setup())
+                .Wait();
 
             if (env.IsDevelopment())
             {

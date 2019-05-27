@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RocketChatToDoServer.Database;
 using RocketChatToDoServer.Database.Models;
 using RocketChatToDoServer.TodoBot;
@@ -30,12 +31,19 @@ namespace RocketChatToDoServer.Controllers
         [HttpGet("{id}")]
         public User Get(int id) => context.Users.First(x => x.ID == id);
 
-        [HttpGet("filter/{search}")]
-        public async Task<IQueryable<User>> GetFilteredUsers(string search)
+        [HttpGet("filter/{search?}")]
+        public IQueryable<User> GetFilteredUsers(string search = null)
         {
-            search = search.ToUpper();
-            await cache.Setup();
-            return cache.Users.Where(u => u.Username.ToUpper().Contains(search)).Select(u =>
+            IEnumerable<Rocket.Chat.Net.Models.FullUser> retusers;
+            if (search == null)
+                retusers = cache.Users;
+             else
+            {
+                search = search.ToUpper();
+                retusers = cache.Users.Where(u => u.Username.ToUpper().Contains(search));
+            }
+            
+            return retusers.Select(u =>
                 context.Users.FirstOrDefault(x => x.Name == u.Username) ?? new User
                     {
                         ID = 0,

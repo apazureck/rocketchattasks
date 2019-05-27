@@ -85,6 +85,7 @@ namespace RocketChatToDoServer.TodoBot.Responses
             Task t = parserService.GetTask(input.Payload.Sender.Name, input.Payload.Message.Msg);
             if(t != null)
             {
+                // todo: Set to common messenger
                 if (t.Assignees.Count == 1 && t.Assignees.First().UserID == t.InitiatorID)
                     messenger.SendMessageToUser(t.InitiatorID, $"You assigned Task {t.ID} to yourself");
                 else

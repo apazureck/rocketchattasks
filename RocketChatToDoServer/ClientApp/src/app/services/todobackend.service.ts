@@ -37,4 +37,8 @@ export class TodobackendService {
   removeAssignee(taskID: number, userID: number) {
     return this.http.post(this.baseUrl + 'api/tasks/' + taskID + '/removeAssignee', userID);
   }
+
+  updateTask(task: Task) {
+    return this.http.put(this.baseUrl + 'api/tasks', task);
+  }
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -7,12 +8,14 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using RocketChatToDoServer.Database;
 using RocketChatToDoServer.Database.Models;
 using RocketChatToDoServer.TodoBot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace RocketChatToDoServer
 {
@@ -29,6 +32,22 @@ namespace RocketChatToDoServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(Configuration);
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+
+                        ValidIssuer = "http://localhost:5000",
+                        ValidAudience = "http://localhost:5000",
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetValue("jwtKey", Defaults.JwtKey)))
+                    };
+                });
             services.AddSingleton(provider => new BotService(provider.GetService<ILogger<BotService>>(), Configuration, services));
             services.AddScoped<TaskParser.TaskParserService>();
             services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
@@ -97,11 +116,6 @@ namespace RocketChatToDoServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            // Connect Bot
-            app.ApplicationServices.GetService<BotService>().LoginAsync()
-                .ContinueWith((task) => app.ApplicationServices.GetService<RocketChatCache>().Setup())
-                .Wait();
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -111,6 +125,12 @@ namespace RocketChatToDoServer
                 app.UseExceptionHandler("/Error");
                 app.UseHsts();
             }
+
+            //app.UseAuthentication();
+            // Connect Bot
+            app.ApplicationServices.GetService<BotService>().LoginAsync()
+                .ContinueWith((task) => app.ApplicationServices.GetService<RocketChatCache>().Setup())
+                .Wait();
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();

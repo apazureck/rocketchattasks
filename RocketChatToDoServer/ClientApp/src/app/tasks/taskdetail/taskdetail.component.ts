@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material';
+import { MatAutocomplete, MatAutocompleteSelectedEvent, MatSnackBar } from '@angular/material';
 import { FormControl } from '@angular/forms';
 import { debounceTime, switchMap, catchError, tap, finalize } from 'rxjs/operators';
 import { TodobackendService } from '../../services/todobackend.service';
@@ -18,7 +18,7 @@ export class TaskDetailComponent {
   @ViewChild('assigneeInput') assigneeInput: Input;
   @ViewChild('auto') matAutocomplete: MatAutocomplete;
 
-  constructor(private todobackendService: TodobackendService, route: ActivatedRoute) {
+  constructor(private todobackendService: TodobackendService, route: ActivatedRoute, private snackBar: MatSnackBar) {
     const taskId = Number(route.snapshot.paramMap.get('taskId'));
 
     const that = this;
@@ -53,6 +53,7 @@ export class TaskDetailComponent {
         if (idel > -1) {
           that.task.assignees.splice(idel, 1);
         }
+        that.openSnackbar('Sucessfully removed Assignee');
       }, err => console.error(err));
   }
 
@@ -63,10 +64,43 @@ export class TaskDetailComponent {
       .subscribe(res => {
         that.task.assignees = res.assignees;
         that.assigneeCtrl.reset();
+        that.openSnackbar('Sucessfully added Assignee');
       }, err => console.error(err));
   }
 
   private _filter(input: string) {
     return this.todobackendService.getFilteredUserList(input);
+  }
+
+  private openSnackbar(message: string) {
+    this.snackBar.open(message, null, {
+      duration: 3000
+    });
+  }
+
+  updateTask(event) {
+    const that = this;
+    this.todobackendService.updateTask(this.task).subscribe(res => {
+      that.openSnackbar('Task sucessfully updated');
+    }, err => console.error(err));
+  }
+
+  changeTaskActive(taskId: number, event: { checked: boolean }) {
+    this.setTaskToDone(taskId, event.checked);
+  }
+
+  private async setTaskToDone(taskId: number, done: boolean) {
+    try {
+      let donetask = await this.todobackendService.getTask(taskId).toPromise();
+
+      if (donetask && donetask.done === done) {
+        return;
+      }
+
+      // todo : Set current user here
+      donetask = await this.todobackendService.setTaskDone(donetask.id, donetask.initiatorId).toPromise();
+    } catch (error) {
+      console.error(error);
+    }
   }
 }

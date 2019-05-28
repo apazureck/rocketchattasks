@@ -14,7 +14,8 @@ import {
   MatChipsModule,
   MatIconModule,
   MatAutocompleteModule,
-  MatProgressSpinnerModule
+  MatProgressSpinnerModule,
+  MatSnackBarModule
 } from '@angular/material';
 
 import { AppComponent } from './app.component';
@@ -51,6 +52,7 @@ import { TodobackendService } from './services/todobackend.service';
     MatIconModule,
     MatAutocompleteModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,

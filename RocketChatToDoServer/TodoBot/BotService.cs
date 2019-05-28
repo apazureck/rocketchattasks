@@ -41,6 +41,12 @@ namespace RocketChatToDoServer.TodoBot
             }
         }
 
+        internal async Tasks.Task<bool> CheckUserLogin(string userName, string password)
+        {
+            var lr = await bots.First().Driver.LoginWithUsernameAsync(userName, password);
+            return !lr.HasError;
+        }
+
         public async Tasks.Task SendMessageToUser(int userId, string message)
         {
             await bots.First().SendMessageAsync(message, userId);
@@ -85,6 +91,16 @@ namespace RocketChatToDoServer.TodoBot
         public async Tasks.Task SendUnAssignedMessage(Database.Models.User user, Database.Models.Task task, Database.Models.User initiator)
         {
             await SendMessageToUser(user.ID, $"Your assignment to **Task {task.ID}**: {task.Title} has been removed.");
+        }
+
+        public async Tasks.Task SendTaskUpdatedMessage(Task task, Database.Models.User initiator)
+        {
+            var sendusers = task.Assignees.Select(x => x.User).ToList();
+            if (task.Assignees.FirstOrDefault(x => task.InitiatorID == x.UserID) == null)
+                sendusers.Add(task.Initiator);
+
+            foreach (Database.Models.User user in sendusers)
+                await SendMessageToUser(user.ID, $"Task {task.ID} has been updated");
         }
     }
 

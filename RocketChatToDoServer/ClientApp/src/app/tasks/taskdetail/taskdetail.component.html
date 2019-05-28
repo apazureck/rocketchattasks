@@ -1,63 +1,51 @@
-<h2>Task {{task.id}}: {{task.title}}</h2>
+<p *ngIf="!task"><em>Loading...</em></p>
+<ng-container *ngIf="task">
+  <h2>Task {{task.id}}: {{task.title}}</h2>
 
-<form>
-  <mat-form-field>
-    <input matInput [readonly]="true" placeholder="Assigned by" name="initiator" [ngModel]="task.initiator.name">
-  </mat-form-field>
-  <mat-form-field>
-    <input matInput [readonly]="true" placeholder="Created" name="creationDate" [ngModel]="task.creationDate | date">
-  </mat-form-field>
-  <mat-form-field>
-    <input matInput [matDatepicker]="picker" placeholder="Due Date" [(ngModel)]="task.dueDate" name="dueDate">
-    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-    <mat-datepicker #picker></mat-datepicker>
-  </mat-form-field>
-  <mat-checkbox [(checked)]="task.done" name=done>
-    Done
-  </mat-checkbox>
+  <form>
+    <mat-form-field class="fullwidth">
+      <input matInput placeholder="Title" name="title" [ngModel]="task.title" (keyup.enter)="updateTask($event)">
+    </mat-form-field>
+    <mat-form-field>
+      <input matInput [readonly]="true" placeholder="Assigned by" name="initiator" [ngModel]="task.initiator.name">
+    </mat-form-field>
+    <mat-form-field>
+      <input matInput [readonly]="true" placeholder="Created" name="creationDate" [ngModel]="task.creationDate | date">
+    </mat-form-field>
+    <mat-form-field>
+      <input matInput [matDatepicker]="picker" placeholder="Due Date" [(ngModel)]="task.dueDate" name="dueDate"
+        (keyup.enter)="updateTask($event)">
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+    <mat-checkbox [(checked)]="task.done" name=done (change)="changeTaskActive(task.id,$event)">
+      Done
+    </mat-checkbox>
 
-  <mat-form-field class="fullwidth">
-    <textarea matInput placeholder="Description" [(ngModel)]="task.description" name="description"></textarea>
-  </mat-form-field>
-  <mat-form-field>
-    <mat-chip-list #assigneeList name="assignees">
-      <mat-chip *ngFor="let assignee of task.assignees" [removable]="true" (removed)="removeAssignee(assignee)">
-        {{assignee.user.name}}
-        <mat-icon matChipRemove>Cancel</mat-icon>
-      </mat-chip>
-      <input matInput placeholder="Assignees" #assigneeInput [matChipInputFor]="assigneeList"
-        [matChipInputSeparatorKeyCodes]="separatorKeysCodes" [matChipInputAddOnBlur]="addOnBlur"
-        [formControl]="assigneeCtrl" [matAutocomplete]="auto">
-    </mat-chip-list>
-    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="assigneeAutoCompleteSelected($event)">
-      <mat-option *ngIf="isLoading" class="is-loading">
-        <mat-spinner diameter="30"></mat-spinner>
-      </mat-option>
-      <ng-container *ngIf="!isLoading">
-        <mat-option *ngFor="let user of filteredUsers" [value]="user">
-          {{user.name}}
+    <mat-form-field class="fullwidth">
+      <textarea matInput placeholder="Description" [(ngModel)]="task.description" name="description"></textarea>
+      <button mat-button (click)="updateTask($event)">Update</button>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-chip-list #assigneeList name="assignees">
+        <mat-chip *ngFor="let assignee of task.assignees" [removable]="true" (removed)="removeAssignee(assignee)">
+          {{assignee.user.name}}
+          <mat-icon matChipRemove>Cancel</mat-icon>
+        </mat-chip>
+        <input matInput placeholder="Assignees" #assigneeInput [matChipInputFor]="assigneeList"
+          [matChipInputSeparatorKeyCodes]="separatorKeyCodes" [matChipInputAddOnBlur]="addOnBlur"
+          [(formControl)]="assigneeCtrl" [matAutocomplete]="auto">
+      </mat-chip-list>
+      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="assigneeAutoCompleteSelected($event)">
+        <mat-option *ngIf="isLoading" class="is-loading">
+          <mat-spinner diameter="30"></mat-spinner>
         </mat-option>
-      </ng-container>
-    </mat-autocomplete>
-  </mat-form-field>
-</form>
-<!-- 
-  <tr>
-    <th>
-      Assignees
-    </th>
-    <td>
-      <ul *ngFor="let assignee of task.assignees">
-        <li>
-          {{ assignee.user.name }}
-        </li>
-      </ul>
-    </td>
-  </tr>
-  <tr>
-    <th>
-      
-    </th>
-    
-  </tr>
-</table> -->
+        <ng-container *ngIf="!isLoading">
+          <mat-option *ngFor="let user of filteredUsers" [value]="user">
+            {{user.name}}
+          </mat-option>
+        </ng-container>
+      </mat-autocomplete>
+    </mat-form-field>
+  </form>
+</ng-container>

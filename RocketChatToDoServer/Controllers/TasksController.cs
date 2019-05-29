@@ -153,6 +153,10 @@ namespace RocketChatToDoServer.Controllers
         {
             logger.LogTrace("updating task {task}", task.ID);
 
+            // Simple check if entity is present
+            if (task.ID == 0)
+                return BadRequest();
+
             context.Tasks.Update(task);
             context.SaveChanges();
 

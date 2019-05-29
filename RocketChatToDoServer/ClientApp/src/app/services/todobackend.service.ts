@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 
 @Injectable()
@@ -40,5 +40,13 @@ export class TodobackendService {
 
   updateTask(task: Task) {
     return this.http.put(this.baseUrl + 'api/tasks', task);
+  }
+
+  login(credentials: string) {
+    return this.http.post(this.baseUrl + '/api/auth/login', credentials, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    });
   }
 }

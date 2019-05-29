@@ -1,31 +1,34 @@
-<p *ngIf="!task"><em>Loading...</em></p>
+<p *ngIf="!task">
+  <mat-spinner diameter="30"><em>Loading Task...</em></mat-spinner></p>
 <ng-container *ngIf="task">
   <h2>Task {{task.id}}: {{task.title}}</h2>
 
-  <form>
+  <form [formGroup]="detailsFormGroup" (ngSubmit)="onSubmit()">
     <mat-form-field class="fullwidth">
-      <input matInput placeholder="Title" name="title" [ngModel]="task.title" (keyup.enter)="updateTask($event)">
+      <input matInput formControlName="title" placeholder="Title" name="title">
+    </mat-form-field>
+    <mat-form-field formGroupName="initiator">
+      <input matInput formControlName="name" [readonly]="true" placeholder="Assigned by" name="initiator" >
     </mat-form-field>
     <mat-form-field>
-      <input matInput [readonly]="true" placeholder="Assigned by" name="initiator" [ngModel]="task.initiator.name">
+      <input matInput [readonly]="true" formControlName="creationDate" [matDatepicker]="cdpicker" placeholder="Created" name="creationDate">
+      <mat-datepicker #cdpicker></mat-datepicker>
     </mat-form-field>
     <mat-form-field>
-      <input matInput [readonly]="true" placeholder="Created" name="creationDate" [ngModel]="task.creationDate | date">
-    </mat-form-field>
-    <mat-form-field>
-      <input matInput [matDatepicker]="picker" placeholder="Due Date" [(ngModel)]="task.dueDate" name="dueDate"
-        (keyup.enter)="updateTask($event)">
+      <input matInput formControlName="dueDate" [matDatepicker]="picker" placeholder="Due Date" name="dueDate">
       <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
       <mat-datepicker #picker></mat-datepicker>
     </mat-form-field>
     <mat-checkbox [(checked)]="task.done" name=done (change)="changeTaskActive(task.id,$event)">
       Done
     </mat-checkbox>
-
     <mat-form-field class="fullwidth">
-      <textarea matInput placeholder="Description" [(ngModel)]="task.description" name="description"></textarea>
-      <button mat-button (click)="updateTask($event)">Update</button>
+      <textarea matInput formControlName="description" placeholder="Description" name="description"></textarea>
     </mat-form-field>
+    <button type="submit" class="btn btn-primary" mat-button>Update</button>
+  </form>
+  <p>&nbsp;</p>
+  <form [formGroup]="assigneesFormGroup">
     <mat-form-field>
       <mat-chip-list #assigneeList name="assignees">
         <mat-chip *ngFor="let assignee of task.assignees" [removable]="true" (removed)="removeAssignee(assignee)">
@@ -34,11 +37,11 @@
         </mat-chip>
         <input matInput placeholder="Assignees" #assigneeInput [matChipInputFor]="assigneeList"
           [matChipInputSeparatorKeyCodes]="separatorKeyCodes" [matChipInputAddOnBlur]="addOnBlur"
-          [(formControl)]="assigneeCtrl" [matAutocomplete]="auto">
+          formControlName="filteredUser" [matAutocomplete]="auto">
       </mat-chip-list>
       <mat-autocomplete #auto="matAutocomplete" (optionSelected)="assigneeAutoCompleteSelected($event)">
         <mat-option *ngIf="isLoading" class="is-loading">
-          <mat-spinner diameter="30"></mat-spinner>
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
         </mat-option>
         <ng-container *ngIf="!isLoading">
           <mat-option *ngFor="let user of filteredUsers" [value]="user">

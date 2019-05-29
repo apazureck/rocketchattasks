@@ -1,7 +1,7 @@
-import { Component, ViewChild, ElementRef, Input } from '@angular/core';
+import { Component, ViewChild, ElementRef, Input, ComponentRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatAutocomplete, MatAutocompleteSelectedEvent, MatSnackBar } from '@angular/material';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormGroup, FormBuilder } from '@angular/forms';
 import { debounceTime, switchMap, catchError, tap, finalize } from 'rxjs/operators';
 import { TodobackendService } from '../../services/todobackend.service';
 
@@ -13,19 +13,36 @@ import { TodobackendService } from '../../services/todobackend.service';
 export class TaskDetailComponent {
   task: Task;
   filteredUsers: User[] = [];
-  assigneeCtrl = new FormControl();
+  assigneeCtrl = new FormControl('');
   isLoading = false;
-  @ViewChild('assigneeInput') assigneeInput: Input;
+  detailsFormGroup: FormGroup;
+  assigneesFormGroup: FormGroup;
   @ViewChild('auto') matAutocomplete: MatAutocomplete;
 
-  constructor(private todobackendService: TodobackendService, route: ActivatedRoute, private snackBar: MatSnackBar) {
+  constructor(private todobackendService: TodobackendService, route: ActivatedRoute, private snackBar: MatSnackBar, fb: FormBuilder) {
     const taskId = Number(route.snapshot.paramMap.get('taskId'));
 
     const that = this;
 
     todobackendService.getTask(taskId).subscribe(res => {
       that.task = res;
+      that.detailsFormGroup.patchValue(res);
     }, err => console.error(err));
+
+    this.detailsFormGroup = fb.group({
+      id: [0],
+      description: [''],
+      title: [''],
+      initiator: fb.group({
+        name: ['']
+      }),
+      creationDate: [new Date()],
+      dueDate: [new Date()]
+    });
+
+    this.assigneesFormGroup = new FormGroup({
+      filteredUser: this.assigneeCtrl
+    });
 
     this.assigneeCtrl.valueChanges
       .pipe(
@@ -63,7 +80,8 @@ export class TaskDetailComponent {
       .pipe(switchMap(value => this.todobackendService.getTask(this.task.id)))
       .subscribe(res => {
         that.task.assignees = res.assignees;
-        that.assigneeCtrl.reset();
+        this.assigneesFormGroup.reset();
+        this.assigneesFormGroup['filteredUser'].setValue('');
         that.openSnackbar('Sucessfully added Assignee');
       }, err => console.error(err));
   }
@@ -78,9 +96,13 @@ export class TaskDetailComponent {
     });
   }
 
-  updateTask(event) {
+  onSubmit() {
     const that = this;
-    this.todobackendService.updateTask(this.task).subscribe(res => {
+    const t = this.detailsFormGroup.value as Task;
+    if (t.id === 0) {
+      return;
+    }
+    this.todobackendService.updateTask(t).subscribe(res => {
       that.openSnackbar('Task sucessfully updated');
     }, err => console.error(err));
   }
@@ -99,6 +121,8 @@ export class TaskDetailComponent {
 
       // todo : Set current user here
       donetask = await this.todobackendService.setTaskDone(donetask.id, donetask.initiatorId).toPromise();
+
+      this.openSnackbar('Task was set to ' + (done ? 'done' : 'open'));
     } catch (error) {
       console.error(error);
     }

@@ -28,6 +28,9 @@ import { UsersComponent } from './users/users.component';
 import { TasksComponent } from './users/tasks/tasks.component';
 import { TaskDetailComponent } from './tasks/taskdetail/taskdetail.component';
 import { TodobackendService } from './services/todobackend.service';
+import { LoginComponent } from './login/login.component';
+import { AuthGuard } from './services/authGuard';
+import { JwtHelper } from 'angular2-jwt';
 
 @NgModule({
   declarations: [
@@ -38,7 +41,8 @@ import { TodobackendService } from './services/todobackend.service';
     FetchDataComponent,
     UsersComponent,
     TasksComponent,
-    TaskDetailComponent
+    TaskDetailComponent,
+    LoginComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -61,15 +65,14 @@ import { TodobackendService } from './services/todobackend.service';
     FormsModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
-      { path: 'counter', component: CounterComponent },
-      { path: 'fetch-data', component: FetchDataComponent },
-      { path: 'users', component: UsersComponent },
-      { path: 'users/:userId', component: TasksComponent },
-      { path: 'users/:userId/setDone/:taskId', component: TasksComponent },
-      { path: 'tasks/:taskId', component: TaskDetailComponent }
+      { path: 'login', component: LoginComponent },
+      { path: 'users', component: UsersComponent, canActivate: [AuthGuard] },
+      { path: 'users/:userId', component: TasksComponent, canActivate: [AuthGuard] },
+      { path: 'users/:userId/setDone/:taskId', component: TasksComponent, canActivate: [AuthGuard] },
+      { path: 'tasks/:taskId', component: TaskDetailComponent, canActivate: [AuthGuard] }
     ])
   ],
-  providers: [ MatDatepickerModule, TodobackendService ],
+  providers: [ MatDatepickerModule, TodobackendService, AuthGuard, JwtHelper ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

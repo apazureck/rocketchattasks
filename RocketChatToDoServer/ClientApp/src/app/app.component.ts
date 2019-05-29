@@ -14,16 +14,4 @@ export class AppComponent {
   constructor(private todoBackendService: TodobackendService, private router: Router) {
   }
   title = 'app';
-
-  login(form: NgForm) {
-    const credentials = JSON.stringify(form.value);
-    this.todoBackendService.login(credentials).subscribe(response => {
-      const token = (<any>response).token;
-      localStorage.setItem('jwt', token);
-      this.invalidLogin = false;
-      this.router.navigate(['/']);
-    }, err => {
-      this.invalidLogin = true;
-    });
-  }
 }

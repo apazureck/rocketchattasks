@@ -48,6 +48,15 @@ namespace RocketChatToDoServer
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetValue("jwtKey", Defaults.JwtKey)))
                     };
                 });
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("EnableCORS", builder =>
+                {
+                    builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials().Build();
+                });
+            });
+
             services.AddSingleton(provider => new BotService(provider.GetService<ILogger<BotService>>(), Configuration, services));
             services.AddScoped<TaskParser.TaskParserService>();
             services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
@@ -131,6 +140,8 @@ namespace RocketChatToDoServer
             app.ApplicationServices.GetService<BotService>().LoginAsync()
                 .ContinueWith((task) => app.ApplicationServices.GetService<RocketChatCache>().Setup())
                 .Wait();
+
+            app.UseCors("EnableCORS");
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();

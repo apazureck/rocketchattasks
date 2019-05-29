@@ -12,8 +12,7 @@ using Async = System.Threading.Tasks;
 
 namespace RocketChatToDoServer.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    [Route("api/[controller]"), Authorize, ApiController]
     public class TasksController : ControllerBase
     {
         private readonly TaskContext context;

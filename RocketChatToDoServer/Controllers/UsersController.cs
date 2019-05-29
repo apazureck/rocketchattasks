@@ -8,8 +8,7 @@ using RocketChatToDoServer.TodoBot;
 
 namespace RocketChatToDoServer.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    [Route("api/[controller]"), Authorize, ApiController]
     public class UsersController : ControllerBase
     {
         private readonly TaskContext context;

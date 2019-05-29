@@ -16,8 +16,7 @@ namespace RocketChatToDoServer.Controllers
         public string Password { get; set; }
     }
 
-    [Route("api/auth")]
-    [ApiController]
+    [Route("api/auth"), ApiController]
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration configuration;

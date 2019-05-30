@@ -35,4 +35,8 @@ export class AppComponent {
     this.messenger.raiseUserLoggedOut();
     this.router.navigate(['login']);
   }
+
+  goHome() {
+    this.router.navigate(['/']);
+  }
 }

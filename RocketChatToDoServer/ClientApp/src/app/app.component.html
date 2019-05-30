@@ -1,5 +1,5 @@
 <mat-toolbar>
-  <span><b>{{title}}</b> <span *ngIf="user">for {{user.name}}</span></span>
+  <a (click)="goHome()"><b>{{title}}</b> <span *ngIf="user">for {{user.name}}</span></a>
   <span class="fill-remaining-space">&nbsp;</span>
   <button mat-raised-button color="primary" *ngIf="user" (click)="logOut()">Logout</button>
 </mat-toolbar>

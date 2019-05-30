@@ -7,6 +7,6 @@ namespace RocketChatToDoServer
 {
     public static class Defaults
     {
-        public static string JwtKey { get; } = Guid.NewGuid().ToString();
+        public readonly static string JwtKey = Guid.NewGuid().ToString();
     }
 }

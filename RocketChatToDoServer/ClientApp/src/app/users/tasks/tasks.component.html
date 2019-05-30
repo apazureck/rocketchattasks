@@ -26,8 +26,8 @@
     <tr *ngFor="let task of tasks">
       <td>{{ task.id }}</td>
       <td><mat-checkbox [checked]="task.done" (change)="changeTaskActive(task.id,$event)">Done</mat-checkbox></td>
-      <td>{{ task.title }}</td>
-      <td>{{ task.dueDate }}</td>
+      <td><a (click)="taskSelected(task)">{{ task.title }}</a></td>
+      <td>{{ task.dueDate | date }}</td>
       <td>
         <ul *ngFor="let assignee of task.assignees">
           <li>{{ assignee.user.name }}</li>

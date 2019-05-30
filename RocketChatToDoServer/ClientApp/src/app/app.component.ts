@@ -1,8 +1,6 @@
 import { Component } from '@angular/core';
-import { NgForm } from '@angular/forms';
 import { TodobackendService } from './services/todobackend.service';
 import { Router } from '@angular/router';
-import { AuthGuard } from './services/authGuard';
 import { MessengerService } from './services/messenger.service';
 
 @Component({

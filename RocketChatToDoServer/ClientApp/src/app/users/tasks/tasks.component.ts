@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TodobackendService } from '../../services/todobackend.service';
 
 @Component({
@@ -13,7 +13,10 @@ export class TasksComponent {
   public user: User;
   private setTaskDoneId: number;
   private error: string;
-  constructor(private http: HttpClient, private todobackendService: TodobackendService, private route: ActivatedRoute) {
+  constructor(private http: HttpClient,
+    private todobackendService: TodobackendService,
+    private route: ActivatedRoute,
+    private router: Router) {
     const userId = Number(route.snapshot.paramMap.get('userId')) || Number(localStorage.getItem('userId'));
     try {
       this.setTaskDoneId = Number(route.snapshot.paramMap.get('taskId'));
@@ -62,5 +65,9 @@ export class TasksComponent {
     } catch (error) {
       console.error(error);
     }
+  }
+
+  taskSelected(task: Task) {
+    this.router.navigate(['tasks/' + task.id]);
   }
 }

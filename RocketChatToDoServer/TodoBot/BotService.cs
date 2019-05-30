@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Rocket.Chat.Net.Bot;
+using Rocket.Chat.Net.Driver;
 using Rocket.Chat.Net.Interfaces;
 using Rocket.Chat.Net.Models;
 using Rocket.Chat.Net.Models.LoginOptions;
@@ -43,8 +44,9 @@ namespace RocketChatToDoServer.TodoBot
 
         internal async Tasks.Task<bool> CheckUserLogin(string userName, string password)
         {
-            var lr = await bots.First().Driver.LoginWithUsernameAsync(userName, password);
-            return !lr.HasError;
+            var config = botConfigurations.First();
+            var driver = new RocketChatDriver(config.RocketServerUrl, config.UseSsl, logger);
+            return await driver.CheckLogin(userName, password);
         }
 
         public async Tasks.Task SendMessageToUser(int userId, string message)

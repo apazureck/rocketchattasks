@@ -1,7 +1,7 @@
 <mat-toolbar>
   <span><b>{{title}}</b> <span *ngIf="user">for {{user.name}}</span></span>
   <span class="fill-remaining-space">&nbsp;</span>
-  <button mat-raised-button color="primary" *ngIf="user" (click)="logout">Logout</button>
+  <button mat-raised-button color="primary" *ngIf="user" (click)="logOut()">Logout</button>
 </mat-toolbar>
 <div class='col-sm-9 body-content'>
   <router-outlet></router-outlet>

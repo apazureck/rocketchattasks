@@ -13,20 +13,26 @@ import { MessengerService } from './services/messenger.service';
 export class AppComponent {
   user: User;
   title = 'Todo List';
-  constructor(private router: Router, backendService: TodobackendService, messenger: MessengerService) {
+  constructor(private router: Router, backendService: TodobackendService, private messenger: MessengerService) {
     const token = localStorage.getItem('jwt');
     if (token) {
       backendService.getLoggedInUser()
         .subscribe(res => {
+          localStorage.setItem('userId', res.id.toString());
           this.user = res;
         }, err => console.error(err));
     }
     messenger.subscribeToUserLoggedIn(res => {
+      localStorage.setItem('userId', res.id.toString());
       this.user = res;
     });
+    messenger.subscribeToUserLoggedOut(() => this.user = undefined);
   }
 
   logOut() {
     localStorage.removeItem('jwt');
+    localStorage.removeItem('userId');
+    this.messenger.raiseUserLoggedOut();
+    this.router.navigate(['login']);
   }
 }

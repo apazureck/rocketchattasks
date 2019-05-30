@@ -14,7 +14,7 @@ export class TasksComponent {
   private setTaskDoneId: number;
   private error: string;
   constructor(private http: HttpClient, private todobackendService: TodobackendService, private route: ActivatedRoute) {
-    const userId = Number(route.snapshot.paramMap.get('userId'));
+    const userId = Number(route.snapshot.paramMap.get('userId')) || Number(localStorage.getItem('userId'));
     try {
       this.setTaskDoneId = Number(route.snapshot.paramMap.get('taskId'));
     } catch (error) {

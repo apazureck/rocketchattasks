@@ -67,7 +67,7 @@ import { MessengerService } from './services/messenger.service';
     HttpClientModule,
     FormsModule,
     RouterModule.forRoot([
-      { path: '', component: HomeComponent, pathMatch: 'full' },
+      { path: '', component: TasksComponent, canActivate: [AuthGuard], pathMatch: 'full' },
       { path: 'login', component: LoginComponent },
       { path: 'users', component: UsersComponent, canActivate: [AuthGuard] },
       { path: 'users/:userId', component: TasksComponent, canActivate: [AuthGuard] },

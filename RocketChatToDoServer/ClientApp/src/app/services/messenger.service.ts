@@ -8,6 +8,7 @@ export class MessengerService {
   constructor() { }
 
   private userLoggedInSubject = new Subject<User>();
+  private userLoggedOutSubject = new Subject();
 
   raiseUserLoggedIn(user: User): void {
     this.userLoggedInSubject.next(user);
@@ -15,6 +16,15 @@ export class MessengerService {
 
   subscribeToUserLoggedIn(callback: (user) => void): void {
     this.userLoggedInSubject.asObservable()
+      .subscribe(callback, this.handleError);
+  }
+
+  raiseUserLoggedOut(): void {
+    this.userLoggedOutSubject.next();
+  }
+
+  subscribeToUserLoggedOut(callback: () => void): void {
+    this.userLoggedOutSubject.asObservable()
       .subscribe(callback, this.handleError);
   }
 

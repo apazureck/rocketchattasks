@@ -47,5 +47,12 @@ namespace RocketChatToDoServer.Controllers
                         Tasks = new List<UserTaskMap>()
                     }).AsQueryable();
         }
+
+        static readonly int toremove = "Bearer ".Length;
+        [HttpGet("currentlyLoggedIn")]
+        public User GetUserByToken([FromHeader(Name = "Authorization")] string token)
+        {
+            return cache.AssignedTokens[token.Substring(toremove)];
+        }
     }
 }

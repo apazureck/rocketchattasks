@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using RocketChatToDoServer.Database;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,11 +23,15 @@ namespace RocketChatToDoServer.Controllers
     {
         private readonly IConfiguration configuration;
         private readonly TodoBot.BotService botService;
+        private readonly TaskContext context;
+        private readonly RocketChatCache cache;
 
-        public AuthController(IConfiguration configuration, TodoBot.BotService botService)
+        public AuthController(IConfiguration configuration, TodoBot.BotService botService, TaskContext context, RocketChatCache cache)
         {
             this.configuration = configuration;
             this.botService = botService;
+            this.context = context;
+            this.cache = cache;
         }
         // GET api/values
         [HttpPost, Route("login")]
@@ -49,8 +55,11 @@ namespace RocketChatToDoServer.Controllers
                     signingCredentials: signinCredentials
                 );
 
+                Database.Models.User fuser = context.Users.First(u => u.Name == user.UserName);
+
                 var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
-                return Ok(new { Token = tokenString });
+                cache.AssignedTokens[tokenString] = fuser;
+                return Ok(new { Token = tokenString, User = fuser });
             }
             else
             {

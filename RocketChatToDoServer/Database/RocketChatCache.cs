@@ -23,5 +23,6 @@ namespace RocketChatToDoServer.Database
         private readonly BotService botService;
 
         public IEnumerable<FullUser> Users => users;
+        public IDictionary<string, Models.User> AssignedTokens { get; } = new Dictionary<string, Models.User>();
     }
 }

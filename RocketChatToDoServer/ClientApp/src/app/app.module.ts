@@ -16,7 +16,8 @@ import {
   MatAutocompleteModule,
   MatProgressSpinnerModule,
   MatSnackBarModule,
-  MatProgressBarModule
+  MatProgressBarModule,
+  MatToolbarModule
 } from '@angular/material';
 
 import { AppComponent } from './app.component';
@@ -31,6 +32,7 @@ import { TodobackendService } from './services/todobackend.service';
 import { LoginComponent } from './login/login.component';
 import { AuthGuard } from './services/authGuard';
 import { JwtHelper } from 'angular2-jwt';
+import { MessengerService } from './services/messenger.service';
 
 @NgModule({
   declarations: [
@@ -59,6 +61,7 @@ import { JwtHelper } from 'angular2-jwt';
     MatProgressSpinnerModule,
     MatProgressBarModule,
     MatSnackBarModule,
+    MatToolbarModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
@@ -72,7 +75,7 @@ import { JwtHelper } from 'angular2-jwt';
       { path: 'tasks/:taskId', component: TaskDetailComponent, canActivate: [AuthGuard] }
     ])
   ],
-  providers: [ MatDatepickerModule, TodobackendService, AuthGuard, JwtHelper ],
+  providers: [ MatDatepickerModule, TodobackendService, AuthGuard, JwtHelper, MessengerService ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

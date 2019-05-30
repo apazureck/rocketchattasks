@@ -83,6 +83,14 @@ export class TodobackendService {
   }
 
   login(credentials: string) {
-    return this.http.post(this.baseUrl + 'api/auth/login', credentials, this.getOptions());
+    return this.http.post(this.baseUrl + 'api/auth/login', credentials, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    });
+  }
+
+  getLoggedInUser() {
+    return this.get<User>('api/users/currentlyLoggedIn');
   }
 }

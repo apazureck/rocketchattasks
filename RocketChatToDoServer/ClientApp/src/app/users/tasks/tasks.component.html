@@ -1,4 +1,7 @@
-<p>Hello, <span *ngIf="user">{{ user.name }}</span>. <span *ngIf="tasks && tasks.length < 1; else elseBlock">You have no open tasks.</span><ng-template #elseBlock>Here are your open tasks:</ng-template></p>
+<p>Hello, <span *ngIf="user">{{ user.name }}</span>. <span *ngIf="tasks && tasks.length < 1; else elseBlock">You have no
+    open tasks.</span>
+  <ng-template #elseBlock>Here are your open tasks:</ng-template>
+</p>
 
 <p *ngIf="!tasks"><em>Loading...</em></p>
 
@@ -20,19 +23,27 @@
       <th>
         Assignees
       </th>
+      <th>
+        Initiator
+      </th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let task of tasks">
       <td>{{ task.id }}</td>
-      <td><mat-checkbox [checked]="task.done" (change)="changeTaskActive(task.id,$event)">Done</mat-checkbox></td>
+      <td>
+        <mat-checkbox [checked]="task.done" (change)="changeTaskActive(task.id,$event)">Done</mat-checkbox>
+      </td>
       <td><a (click)="taskSelected(task)">{{ task.title }}</a></td>
       <td>{{ task.dueDate | date }}</td>
       <td>
         <ul *ngFor="let assignee of task.assignees">
           <li>{{ assignee.user.name }}</li>
-      </ul>
-    </td>
+        </ul>
+      </td>
+      <td>
+        {{ task.initiator.name }}
+      </td>
     </tr>
   </tbody>
 </table>

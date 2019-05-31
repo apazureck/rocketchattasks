@@ -59,6 +59,7 @@ namespace RocketChatToDoServer
 
             services.AddSingleton(provider => new BotService(provider.GetService<ILogger<BotService>>(), Configuration, services));
             services.AddScoped<TaskParser.TaskParserService>();
+            services.AddSingleton<Scheduler.Scheduler>();
 
             // create connection string for sqlite database using the appsettings.json section database
             string connection = Configuration.GetSection("database").GetChildren()
@@ -129,11 +130,13 @@ namespace RocketChatToDoServer
                 app.UseHsts();
             }
 
+            HandlebarsSetup.Setup();
             app.UseAuthentication();
             // Connect Bot
             app.ApplicationServices.GetService<BotService>().LoginAsync()
                 .ContinueWith((task) => app.ApplicationServices.GetService<RocketChatCache>().Setup())
                 .Wait();
+            app.ApplicationServices.GetService<Scheduler.Scheduler>().StartScheduler();
 
             app.UseCors("EnableCORS");
 

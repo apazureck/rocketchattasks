@@ -21,42 +21,8 @@ namespace RocketChatToDoServer.TodoBot.Responses
         private readonly TaskContext context;
         private readonly TaskParser.TaskParserService parserService;
         private readonly IPrivateMessenger messenger;
-        private const string TASKTEMPLATENAME = "TaskTemplate";
-        private const string DEFAULTTASKTEMPLATE = "**[{{Task.ID}}]({{TaskLink}})**: {{Task.Title}}{{NotDefaultDate Task.DueDate}} - Due: {{Task.DueDate}}{{/NotDefaultDate}} ([Done]({{DoneLink}}))";
-        private const string DEFAULTTASKLISTTEMPLATE = "**[Your open Tasks]({{userTaskLink}}):**\n{{#each tasks}}{{> " + TASKTEMPLATENAME + "}}\n{{/each}}";
 
-        private static Func<object, string> TaskListTemplate { get; set; }
         public string ResponseUrl { get; }
-
-        static MentionedResponse()
-        {
-            void notDefaultDateHelper(TextWriter output, HelperOptions options, dynamic context, object[] arguments)
-            {
-                if (arguments.Length != 1)
-                {
-                    throw new HandlebarsException("{{NotDefaultDateHelper}} helper must have exactly one argument");
-                }
-                var arg = (DateTime)arguments[0];
-                if (arg != default)
-                {
-                    options.Template(output, context);
-                } else
-                {
-                    options.Inverse(output, context);
-                }
-            }
-            Handlebars.RegisterHelper("NotDefaultDate", notDefaultDateHelper);
-
-            Handlebars.RegisterHelper("FormatDate", (writer, context, parameters) =>
-            {
-                var date = (DateTime)parameters[0];
-                string format = parameters[1] as string;
-                writer.WriteSafeString(date.ToString(format));
-            });
-
-            Handlebars.RegisterTemplate(TASKTEMPLATENAME, DEFAULTTASKTEMPLATE);
-            TaskListTemplate = Handlebars.Compile(DEFAULTTASKLISTTEMPLATE);
-        }
 
         public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context, TaskParser.TaskParserService parserService, IPrivateMessenger messenger, string responseUrl = null)
         {
@@ -82,7 +48,7 @@ namespace RocketChatToDoServer.TodoBot.Responses
 
         private IMessageResponse RespondToChannelMessage(NotifyUserMessageArgument input)
         {
-            Task t = parserService.GetTask(input.Payload.Sender.Name, input.Payload.Message.Msg);
+            Task t = parserService.GetTask(input.Payload.Sender.Username, input.Payload.Message.Msg);
             if(t != null)
             {
                 // todo: Set to common messenger
@@ -103,10 +69,6 @@ namespace RocketChatToDoServer.TodoBot.Responses
                 return new BasicResponse("Did not understand", input.Payload.RoomId);
             }
         }
-
-        private string CreateTaskUrl(Task t) => $"{ResponseUrl}/tasks/{t.ID}";
-
-        private string CreateDoneUrl(Task x, User user) => ResponseUrl + $"/users/{user.ID}/setDone/{x.ID}";
 
         private IMessageResponse RespondToDirectMessage(NotifyUserMessageArgument input)
         {
@@ -168,21 +130,8 @@ namespace RocketChatToDoServer.TodoBot.Responses
         {
             try
             {
-                User user = context.Users.First(u => u.Name == input.Title.Substring(1));
-                IEnumerable<Task> tl = GetTaskList(context, user).Where(x => !x.Done).ToList();
-                if (tl.Count() < 1)
-                    throw new InvalidOperationException("Tasklist is empty");
-
-                return new BasicResponse(TaskListTemplate(new
-                {
-                    tasks = tl.Select(x => new
-                    {
-                        Task = x,
-                        DoneLink = CreateDoneUrl(x, user),
-                        TaskLink = this.CreateTaskUrl(x)
-                    }),
-                    userTaskLink = ResponseUrl + $"/users/{user.ID}"
-                }));
+                string username = input.Title.Substring(1);
+                return new TaskListBuilder(context, ResponseUrl).GetMessage(username, $"Hello {username}, here you go:\n");
             }
             catch (InvalidOperationException)
             {
@@ -191,11 +140,6 @@ namespace RocketChatToDoServer.TodoBot.Responses
             
         }
 
-        private ICollection<Task> GetTaskList(TaskContext context, User user)
-        {
-            IQueryable<UserTaskMap> utmaps = context.UserTaskMaps.Include(utm => utm.Task).Where(utm => utm.UserID == user.ID);
-            List<Task> tl = utmaps.Select(utm => utm.Task).ToList();
-            return tl;
-        }
+        private string CreateTaskUrl(Task t) => $"{ResponseUrl}/tasks/{t.ID}";
     }
 }

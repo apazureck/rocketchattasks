@@ -9,6 +9,9 @@ using System.Collections.Generic;
 using Rocket.Chat.Net.Bot.Interfaces;
 using RocketChatToDoServer.Database;
 using System.Linq;
+using Rocket.Chat.Net.Models;
+using Microsoft.EntityFrameworkCore;
+using Rocket.Chat.Net.Bot.Models;
 
 namespace RocketChatToDoServer.TodoBot
 {
@@ -84,6 +87,37 @@ namespace RocketChatToDoServer.TodoBot
                     logger.LogError(ex, "An error occurred when processing request {subid} with payload {args}", subscriptionId, fields);
                 }
             }
+        }
+
+        internal async Task SendReminders()
+        {
+            try
+            {
+                using (IServiceScope scope = provider.CreateScope())
+                {
+                    TaskContext context = scope.ServiceProvider.GetService<TaskContext>();
+                    foreach(var user in context.Users)
+                    {
+                        await SendMessageAsync(new TaskListBuilder(context, ResponseUrl).GetMessage(user.Name, "Hello {{user.name}}, maybe you can check off some work you did today!"));
+                    }
+                    
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                
+            }
+        }
+
+        private string CreateTaskUrl(Database.Models.Task t) => $"{ResponseUrl}/tasks/{t.ID}";
+
+        private string CreateDoneUrl(Database.Models.Task x, Database.Models.User user) => ResponseUrl + $"/users/{user.ID}/setDone/{x.ID}";
+
+        private ICollection<Database.Models.Task> GetTaskList(TaskContext context, Database.Models.User user)
+        {
+            IQueryable<Database.Models.UserTaskMap> utmaps = context.UserTaskMaps.Include(utm => utm.Task).Where(utm => utm.UserID == user.ID);
+            var tl = utmaps.Select(utm => utm.Task).ToList();
+            return tl;
         }
 
         protected override async Task OnResumedAsync()

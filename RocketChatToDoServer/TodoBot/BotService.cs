@@ -20,7 +20,6 @@ namespace RocketChatToDoServer.TodoBot
     public class BotService : IPrivateMessenger
     {
         private readonly ILogger<BotService> logger;
-        private readonly RocketChatCache cache;
         private readonly List<BotConfiguration> botConfigurations = new List<BotConfiguration>();
         private readonly List<RcDiBot> bots = new List<RcDiBot>();
         private readonly List<ILoginOption> loginOptions = new List<ILoginOption>();
@@ -78,6 +77,14 @@ namespace RocketChatToDoServer.TodoBot
                     logger.LogError(ex, "Could not login bot " + bot.Driver.Username);
                 }
             }            
+        }
+
+        public async System.Threading.Tasks.Task SendReminders()
+        {
+            foreach (var bot in bots)
+            {
+                await bot.SendReminders();
+            }
         }
 
         internal async Tasks.Task<List<FullUser>> GetUserList()

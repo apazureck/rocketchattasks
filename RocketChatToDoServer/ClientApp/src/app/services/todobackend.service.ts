@@ -41,12 +41,12 @@ export class TodobackendService {
   }
 
   private post<T>(relativeUrl: string, body: any): Observable<T> {
-    return this.http.post<T>(this.baseUrl + relativeUrl, body)
+    return this.http.post<T>(this.baseUrl + relativeUrl, body, this.getOptions())
       .pipe(catchError(this.handleError)) as Observable<T>;
   }
 
   private put<T>(relativeUrl: string, body: any): Observable<T> {
-    return this.http.put<T>(this.baseUrl + relativeUrl, body)
+    return this.http.put<T>(this.baseUrl + relativeUrl, body, this.getOptions())
       .pipe(catchError(this.handleError)) as Observable<T>;
   }
 
@@ -63,7 +63,7 @@ export class TodobackendService {
   }
 
   setTaskDone(taskId: number, userId: number, done: boolean = true) {
-    return this.get<Task>('api/tasks/forUser/' + userId + '/' + (done ? 'setDone' : 'setUndone') + '/' + taskId);
+    return this.post<Task>('api/tasks/' + taskId + '/' + (done ? 'setDone' : 'setUndone'), userId);
   }
 
   getFilteredUserList(searchString: string) {

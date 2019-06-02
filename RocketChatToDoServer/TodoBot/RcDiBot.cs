@@ -19,16 +19,19 @@ namespace RocketChatToDoServer.TodoBot
     {
         private IServiceProvider provider;
         private readonly IServiceCollection services;
+        private readonly RocketChatCache cache;
 
-        public RcDiBot(string url, bool useSsl, IServiceCollection services, ILogger logger = null, string responseAddress = null)
-            : this(new RocketChatDriver(url, useSsl, logger), logger, services, responseAddress)
+        public RcDiBot(string url, bool useSsl, IServiceCollection services, RocketChatCache cache, ILogger logger = null, string responseAddress = null)
+            : this(new RocketChatDriver(url, useSsl, logger), cache, logger, services, responseAddress)
         {
+            
         }
 
-        public RcDiBot(IRocketChatDriver driver, ILogger logger, IServiceCollection services, string responseAddress = null) : base(driver, logger)
+        public RcDiBot(IRocketChatDriver driver, RocketChatCache cache, ILogger logger, IServiceCollection services, string responseAddress = null) : base(driver, logger)
         {
             ResponseUrl = responseAddress;
             this.services = services;
+            this.cache = cache;
         }
 
         private class Subscription
@@ -60,6 +63,7 @@ namespace RocketChatToDoServer.TodoBot
         }
 
         public string ResponseUrl { get; }
+        
 
         internal async Task SendMessageAsync(string message, int userId)
         {
@@ -80,12 +84,25 @@ namespace RocketChatToDoServer.TodoBot
                 {
                     var response = (IResponse)scope.ServiceProvider.GetService(subscriptions[subscriptionId].ResponseType);
                     IMessageResponse message = response.RespondTo(fields);
-                    await SendMessageAsync(message);
+                    var result = await SendMessageAsync(message);
+                    response.OnSuccess(result, message);
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "An error occurred when processing request {subid} with payload {args}", subscriptionId, fields);
                 }
+            }
+        }
+
+        public async Task UpdateLastTaskList(int iD, Database.Models.Task taskToSetToDone)
+        {
+            using (var scope = provider.CreateScope())
+            {
+                if (cache.LastTaskListMessageIds.TryGetValue(iD, out (string messageId, string roomId, IMessageResponse response) found))
+                {
+                    if (found.response is TasklistMessageResponse tlr)
+                        await Driver.UpdateMessageAsync(found.messageId, found.roomId, (new TaskListBuilder(scope.ServiceProvider.GetService<TaskContext>()).UpdateMessage(tlr) as TasklistMessageResponse)?.Message ?? "ERROR in TaskListMessage!!!");
+                } 
             }
         }
 
@@ -98,7 +115,22 @@ namespace RocketChatToDoServer.TodoBot
                     TaskContext context = scope.ServiceProvider.GetService<TaskContext>();
                     foreach(var user in context.Users)
                     {
-                        await SendMessageAsync(new TaskListBuilder(context, ResponseUrl).GetMessage(user.Name, "Hello {{user.name}}, maybe you can check off some work you did today!"));
+                        try
+                        {
+                            var msg = new TaskListBuilder(context, ResponseUrl).GetMessage(user.Name, $"Hello {user.Name}, maybe you can check off some work you did today!");
+                            var response = await SendMessageAsync(msg);
+                            if (!response.HasError)
+                                cache.LastTaskListMessageIds[user.ID] = (response.Result.Id, response.Result.RoomId, msg);
+                            logger.LogInformation($"Sucessfully reminded {user.Name}");
+                        }
+                        catch(InvalidOperationException)
+                        {
+                            logger.LogInformation($"No open tasks to remind {user.Name} today");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, $"An error occurred sending reminder to {user.Name}");
+                        }
                     }
                     
                 }

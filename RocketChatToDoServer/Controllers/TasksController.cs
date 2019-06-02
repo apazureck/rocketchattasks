@@ -43,15 +43,15 @@ namespace RocketChatToDoServer.Controllers
             return task;
         }
 
-        [HttpGet("forUser/{userId:int}/setDone/{taskId:int}")]
-        public Task SetDone(int userId, int taskId)
+        [HttpPost("{taskId:int}/setDone")]
+        public Task PostDone(int taskId, [FromBody] int userId)
         {
             logger.LogTrace("Setting Task {id} to done", taskId);
             return SetTaskTo(userId, taskId, true);
         }
 
-        [HttpGet("forUser/{userId:int}/setUndone/{taskId:int}")]
-        public Task SetUndone(int userId, int taskId)
+        [HttpPost("{taskId:int}/setUndone")]
+        public Task PostUndone(int taskId, [FromBody] int userId)
         {
             logger.LogTrace("Setting Task {id} to open", taskId);
             return SetTaskTo(userId, taskId, false);
@@ -76,7 +76,14 @@ namespace RocketChatToDoServer.Controllers
             context.SaveChanges();
 
             SendDoneMessage(taskToSetToDone, done, assignee);
+            UpdateLastTaskList(taskToSetToDone, done, assignee);
             return taskToSetToDone;
+        }
+
+        private async void UpdateLastTaskList(Task taskToSetToDone, bool done, User assignee)
+        {
+            logger.LogTrace("Updating tasklist for user {assignee}", assignee.ID);
+            await botService.UpdateTaskList(assignee.ID, taskToSetToDone);
         }
 
         private async void SendDoneMessage(Task task, bool done, User assignee)

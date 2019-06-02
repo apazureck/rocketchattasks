@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using Rocket.Chat.Net.Bot;
 using Rocket.Chat.Net.Bot.Interfaces;
 using Rocket.Chat.Net.Bot.Models;
+using Rocket.Chat.Net.Models;
+using Rocket.Chat.Net.Models.MethodResults;
 using RocketChatToDoServer.Database;
 using RocketChatToDoServer.Database.Models;
 using System;
@@ -21,15 +23,17 @@ namespace RocketChatToDoServer.TodoBot.Responses
         private readonly TaskContext context;
         private readonly TaskParser.TaskParserService parserService;
         private readonly IPrivateMessenger messenger;
+        private readonly RocketChatCache cache;
 
         public string ResponseUrl { get; }
 
-        public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context, TaskParser.TaskParserService parserService, IPrivateMessenger messenger, string responseUrl = null)
+        public MentionedResponse(ILogger<MentionedResponse> logger, TaskContext context, TaskParser.TaskParserService parserService, IPrivateMessenger messenger, RocketChatCache cache, string responseUrl = null)
         {
             this.logger = logger;
             this.context = context;
             this.parserService = parserService;
             this.messenger = messenger;
+            this.cache = cache;
             ResponseUrl = responseUrl;
         }
         protected override IMessageResponse RespondTo(NotifyUserMessageArgument input)
@@ -126,11 +130,14 @@ namespace RocketChatToDoServer.TodoBot.Responses
             return null;
         }
 
+        private bool wasTaskListResponse = false;
+
         private IMessageResponse RespondToTaskList(NotifyUserMessageArgument input)
         {
             try
             {
                 string username = input.Title.Substring(1);
+                wasTaskListResponse = true;
                 return new TaskListBuilder(context, ResponseUrl).GetMessage(username, $"Hello {username}, here you go:\n");
             }
             catch (InvalidOperationException)
@@ -138,6 +145,14 @@ namespace RocketChatToDoServer.TodoBot.Responses
                 return new BasicResponse("You do not have any open Tasks right now");
             }
             
+        }
+
+        public override void OnSuccess(MethodResult<RocketMessage> result, IMessageResponse response)
+        {
+            if(wasTaskListResponse && response is TasklistMessageResponse tlmr)
+            {
+                cache.LastTaskListMessageIds[tlmr.GetUser().ID] = (result.Result.Id, result.Result.RoomId, response);
+            }
         }
 
         private string CreateTaskUrl(Task t) => $"{ResponseUrl}/tasks/{t.ID}";

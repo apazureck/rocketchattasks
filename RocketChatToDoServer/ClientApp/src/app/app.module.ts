@@ -71,7 +71,7 @@ import { MessengerService } from './services/messenger.service';
       { path: 'login', component: LoginComponent },
       { path: 'users', component: UsersComponent, canActivate: [AuthGuard] },
       { path: 'users/:userId', component: TasksComponent, canActivate: [AuthGuard] },
-      { path: 'users/:userId/setDone/:taskId', component: TasksComponent, canActivate: [AuthGuard] },
+      { path: 'users/:userId/:action/:taskId', component: TasksComponent, canActivate: [AuthGuard] },
       { path: 'tasks/:taskId', component: TaskDetailComponent, canActivate: [AuthGuard] }
     ])
   ],

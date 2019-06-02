@@ -57,7 +57,7 @@ namespace RocketChatToDoServer
                 });
             });
 
-            services.AddSingleton(provider => new BotService(provider.GetService<ILogger<BotService>>(), Configuration, services));
+            services.AddSingleton(provider => new BotService(provider.GetService<ILogger<BotService>>(), Configuration, services, provider.GetService<RocketChatCache>()));
             services.AddScoped<TaskParser.TaskParserService>();
             services.AddSingleton<Scheduler.Scheduler>();
 
@@ -113,8 +113,8 @@ namespace RocketChatToDoServer
                         tc.SaveChanges();
                         return t;
                     }));
-
-            services.AddSingleton<RocketChatCache>();
+            var cache = new RocketChatCache();
+            services.AddSingleton(_ => cache);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -133,8 +133,9 @@ namespace RocketChatToDoServer
             HandlebarsSetup.Setup();
             app.UseAuthentication();
             // Connect Bot
-            app.ApplicationServices.GetService<BotService>().LoginAsync()
-                .ContinueWith((task) => app.ApplicationServices.GetService<RocketChatCache>().Setup())
+            var bs = app.ApplicationServices.GetService<BotService>();
+            bs.LoginAsync()
+                .ContinueWith(async (task) => app.ApplicationServices.GetService<RocketChatCache>().Setup(await bs.GetUserList()))
                 .Wait();
             app.ApplicationServices.GetService<Scheduler.Scheduler>().StartScheduler();
 

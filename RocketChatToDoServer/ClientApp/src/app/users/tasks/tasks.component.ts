@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TodobackendService } from '../../services/todobackend.service';
 
+declare type Action = 'setDone' | 'setUndone';
+
 @Component({
   selector: 'app-tasks',
   templateUrl: './tasks.component.html',
@@ -13,6 +15,7 @@ export class TasksComponent {
   public user: User;
   private setTaskDoneId: number;
   private error: string;
+  private action: Action;
   constructor(private http: HttpClient,
     private todobackendService: TodobackendService,
     private route: ActivatedRoute,
@@ -20,6 +23,7 @@ export class TasksComponent {
     const userId = Number(route.snapshot.paramMap.get('userId')) || Number(localStorage.getItem('userId'));
     try {
       this.setTaskDoneId = Number(route.snapshot.paramMap.get('taskId'));
+      this.action = route.snapshot.paramMap.get('action') as Action;
     } catch (error) {
       this.error = error.message;
     }
@@ -38,8 +42,8 @@ export class TasksComponent {
   }
 
   getDoneTask() {
-    if (this.setTaskDoneId && this.user && this.tasks) {
-      this.setTaskToDone(this.setTaskDoneId, true);
+    if (this.action && this.setTaskDoneId && this.user && this.tasks) {
+      this.setTaskToDone(this.setTaskDoneId, this.action === 'setDone');
     }
   }
 
@@ -55,7 +59,7 @@ export class TasksComponent {
         return;
       }
 
-      donetask = await this.todobackendService.setTaskDone(donetask.id, this.user.id).toPromise();
+      donetask = await this.todobackendService.setTaskDone(donetask.id, this.user.id, done).toPromise();
       if (donetask) {
         const tid = this.tasks.findIndex(x => x.id === donetask.id);
         if (tid > -1) {

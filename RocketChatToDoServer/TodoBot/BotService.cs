@@ -20,14 +20,16 @@ namespace RocketChatToDoServer.TodoBot
     public class BotService : IPrivateMessenger
     {
         private readonly ILogger<BotService> logger;
+        private readonly RocketChatCache cache;
         private readonly List<BotConfiguration> botConfigurations = new List<BotConfiguration>();
         private readonly List<RcDiBot> bots = new List<RcDiBot>();
         private readonly List<ILoginOption> loginOptions = new List<ILoginOption>();
 
-        public BotService(ILogger<BotService> logger, IConfiguration configuration, IServiceCollection services)
+        public BotService(ILogger<BotService> logger, IConfiguration configuration, IServiceCollection services, RocketChatCache cache)
         {
             configuration.GetSection("bots").Bind(botConfigurations);
             this.logger = logger;
+            this.cache = cache;
             foreach (BotConfiguration botconfig in botConfigurations)
             {
                 loginOptions.Add(new LdapLoginOption
@@ -37,7 +39,7 @@ namespace RocketChatToDoServer.TodoBot
                 });
 
                 // SetUp Bot
-                bots.Add(new RcDiBot(botconfig.RocketServerUrl, botconfig.UseSsl, services, logger, botconfig.ResponseUrl));
+                bots.Add(new RcDiBot(botconfig.RocketServerUrl, botconfig.UseSsl, services, cache, logger, botconfig.ResponseUrl));
             }
         }
 
@@ -69,7 +71,7 @@ namespace RocketChatToDoServer.TodoBot
                     {
                         TaskParser.TaskParserService taskParser = provider.GetService<TaskParser.TaskParserService>();
                         taskParser.Username = b.Driver.Username;
-                        return new MentionedResponse(provider.GetService<ILogger<MentionedResponse>>(), provider.GetService<TaskContext>(), taskParser, this, bot.ResponseUrl);
+                        return new MentionedResponse(provider.GetService<ILogger<MentionedResponse>>(), provider.GetService<TaskContext>(), taskParser, this, provider.GetService<RocketChatCache>(), bot.ResponseUrl);
                     }, false);
                 }
                 catch (Exception ex)
@@ -77,6 +79,11 @@ namespace RocketChatToDoServer.TodoBot
                     logger.LogError(ex, "Could not login bot " + bot.Driver.Username);
                 }
             }            
+        }
+
+        public async Tasks.Task UpdateTaskList(int iD, Task taskToSetToDone)
+        {
+            await bots.First().UpdateLastTaskList(iD, taskToSetToDone);
         }
 
         public async System.Threading.Tasks.Task SendReminders()

@@ -1,4 +1,5 @@
-﻿using Rocket.Chat.Net.Interfaces;
+﻿using Rocket.Chat.Net.Bot.Interfaces;
+using Rocket.Chat.Net.Interfaces;
 using Rocket.Chat.Net.Models;
 using RocketChatToDoServer.TodoBot;
 using System;
@@ -9,20 +10,20 @@ namespace RocketChatToDoServer.Database
 {
     public class RocketChatCache
     {
-        public RocketChatCache(BotService botService)
+        public RocketChatCache()
         {
-            this.botService = botService;
+            
         }
 
-        public async Task Setup()
+        public void Setup(List<FullUser> users)
         {
-            users = await botService.GetUserList();
+            this.users = users;
         }
 
         private List<FullUser> users = new List<FullUser>();
-        private readonly BotService botService;
 
         public IEnumerable<FullUser> Users => users;
         public IDictionary<string, Models.User> AssignedTokens { get; } = new Dictionary<string, Models.User>();
+        public IDictionary<int, (string messageId, string roomId, IMessageResponse response)> LastTaskListMessageIds { get; } = new Dictionary<int, (string messageId, string roomId, IMessageResponse response)>();
     }
 }

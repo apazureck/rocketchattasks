@@ -1,0 +1,15 @@
+{
+    "id": "446f4bab-9c61-4270-a5be-669795d8d86e",
+    "version": "0.0.1",
+    "requiredApiVersion": "^1.4.0",
+    "iconFile": "icon.png",
+    "author": {
+        "name": "Andreas Pazureck",
+        "homepage": "https://github.com/apazureck/rocketchattasks",
+        "support": "https://github.com/apazureck/rocketchattasks/issues"
+    },
+    "name": "todoList",
+    "nameSlug": "todolist",
+    "classFile": "TodoListApp.ts",
+    "description": "A todolist for Rocket.Chat"
+}

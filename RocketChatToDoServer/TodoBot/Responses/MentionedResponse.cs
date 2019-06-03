@@ -36,9 +36,10 @@ namespace RocketChatToDoServer.TodoBot.Responses
             this.cache = cache;
             ResponseUrl = responseUrl;
         }
+
         protected override IMessageResponse RespondTo(NotifyUserMessageArgument input)
         {
-            switch(input.Payload.Type)
+            switch (input.Payload.Type)
             {
                 case NotifyUserMessageArgument.PRIVATEMESSAGETYPE:
                     return RespondToDirectMessage(input);
@@ -53,24 +54,30 @@ namespace RocketChatToDoServer.TodoBot.Responses
         private IMessageResponse RespondToChannelMessage(NotifyUserMessageArgument input)
         {
             Task t = parserService.GetTask(input.Payload.Sender.Username, input.Payload.Message.Msg);
-            if(t != null)
-            {
-                // todo: Set to common messenger
-                if (t.Assignees.Count == 1 && t.Assignees.First().UserID == t.InitiatorID)
-                    messenger.SendMessageToUser(t.InitiatorID, $"You assigned Task {t.ID} to yourself");
-                else
-                    messenger.SendMessageToUser(t.InitiatorID, $"You assigned Task {t.ID} to " + t.Assignees.Select(x => x.UserID != t.InitiatorID ? "@" + x.User.Name : "yourself").Aggregate((a, b) => a + ", " + b));
-                foreach (var assignee in t.Assignees)
-                {
-                    if (assignee.UserID != t.InitiatorID)
-                        messenger.SendMessageToUser(assignee.UserID, $"Task {t.ID} has been assigned to you by @" + t.Initiator.Name);
-                }
+            SendResponse(t);
+
+            if (t != null)
                 return new BasicResponse($"Created [Task {t.ID}]({CreateTaskUrl(t)}): {t.Title}", input.Payload.RoomId);
-            }
             else
             {
                 // todo: Write a more informing error message how the user can create a task
                 return new BasicResponse("Did not understand", input.Payload.RoomId);
+            }
+        }
+
+        private void SendResponse(Task t)
+        {
+            if (t == null)
+                return;
+            // todo: Set to common messenger
+            if (t.Assignees.Count == 1 && t.Assignees.First().UserID == t.InitiatorID)
+                messenger.SendMessageToUser(t.InitiatorID, $"You assigned Task {t.ID} to yourself");
+            else
+                messenger.SendMessageToUser(t.InitiatorID, $"You assigned Task {t.ID} to " + t.Assignees.Select(x => x.UserID != t.InitiatorID ? "@" + x.User.Name : "yourself").Aggregate((a, b) => a + ", " + b));
+            foreach (var assignee in t.Assignees)
+            {
+                if (assignee.UserID != t.InitiatorID)
+                    messenger.SendMessageToUser(assignee.UserID, $"Task {t.ID} has been assigned to you by @" + t.Initiator.Name);
             }
         }
 
@@ -85,7 +92,7 @@ namespace RocketChatToDoServer.TodoBot.Responses
             {
                 response = RespondToSetTaskDone(input);
             }
-            if(response != null)
+            if (response != null)
             {
                 response.RoomId = response.RoomId ?? input.Payload.RoomId;
                 return response;
@@ -144,12 +151,12 @@ namespace RocketChatToDoServer.TodoBot.Responses
             {
                 return new BasicResponse("You do not have any open Tasks right now");
             }
-            
+
         }
 
         public override void OnSuccess(MethodResult<RocketMessage> result, IMessageResponse response)
         {
-            if(wasTaskListResponse && response is TasklistMessageResponse tlmr)
+            if (wasTaskListResponse && response is TasklistMessageResponse tlmr)
             {
                 cache.LastTaskListMessageIds[tlmr.GetUser().ID] = (result.Result.Id, result.Result.RoomId, response);
             }

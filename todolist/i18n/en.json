@@ -1,0 +1,8 @@
+{
+    "settings_todoList_loginName_Label": "Login Name",
+    "settings_todoList_loginName_Description": "The Login name for the Todo Server. This is needed to send data to the todo server.",
+    "settings_loginPassword_Label": "Password",
+    "settings_loginPassword_Description": "The password to login to the todo server",
+    "todoList_todo_command_preview": "@<user> @<user>: Do something UNTIL date",
+    "todoList_todo_command_description": "Add new todo item for users"
+}

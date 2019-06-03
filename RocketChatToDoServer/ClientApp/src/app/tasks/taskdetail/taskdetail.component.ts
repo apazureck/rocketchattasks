@@ -15,18 +15,21 @@ export class TaskDetailComponent {
   filteredUsers: User[] = [];
   assigneeCtrl = new FormControl('');
   isLoading = false;
+  isAllowedToEdit = false;
   detailsFormGroup: FormGroup;
   assigneesFormGroup: FormGroup;
   @ViewChild('auto') matAutocomplete: MatAutocomplete;
 
   constructor(private todobackendService: TodobackendService, route: ActivatedRoute, private snackBar: MatSnackBar, fb: FormBuilder) {
     const taskId = Number(route.snapshot.paramMap.get('taskId'));
+    const loggedInUserId = Number(localStorage.getItem('userId'));
 
     const that = this;
 
     todobackendService.getTask(taskId).subscribe(res => {
       that.task = res;
       that.detailsFormGroup.patchValue(res);
+      this.isAllowedToEdit = res.assignees.findIndex(utm => utm.userID === loggedInUserId) > -1 || loggedInUserId === res.initiatorId;
     }, err => console.error(err));
 
     this.detailsFormGroup = fb.group({
@@ -104,6 +107,7 @@ export class TaskDetailComponent {
     }
     this.todobackendService.updateTask(t).subscribe(res => {
       that.openSnackbar('Task sucessfully updated');
+      that.detailsFormGroup.reset(res);
     }, err => console.error(err));
   }
 

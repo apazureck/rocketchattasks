@@ -18,13 +18,15 @@ namespace RocketChatToDoServer.Controllers
         private readonly TaskContext context;
         private readonly BotService botService;
         private readonly ILogger<TasksController> logger;
+        private readonly RocketChatCache cache;
         private readonly string responseUrl;
 
-        public TasksController(TaskContext context, BotService botService, IConfiguration config, ILogger<TasksController> logger)
+        public TasksController(TaskContext context, BotService botService, IConfiguration config, ILogger<TasksController> logger, RocketChatCache cache)
         {
             this.context = context;
             this.botService = botService;
             this.logger = logger;
+            this.cache = cache;
             responseUrl = config.GetSection("bots").Get<BotConfiguration[]>()[0].ResponseUrl;
         }
         
@@ -155,7 +157,7 @@ namespace RocketChatToDoServer.Controllers
         }
 
         [HttpPut]
-        public async Async.Task<IActionResult> UpdateTask([FromBody] Task task)
+        public async Async.Task<IActionResult> UpdateTask([FromBody] Task task, [FromHeader(Name = "Authorization")] string token)
         {
             logger.LogTrace("updating task {task}", task.ID);
 
@@ -163,14 +165,39 @@ namespace RocketChatToDoServer.Controllers
             if (task.ID == 0)
                 return BadRequest();
 
+            User loggedInUser = cache.GetUserByToken(token);
+
+            Task original = context.Tasks.Include(t => t.Initiator).Include(t => t.Assignees).FirstOrDefault(x => x.ID == task.ID);
+
+            // Check if user is allowed to edit task
+            if (UserIsNotAllowedToEditTask(loggedInUser, original))
+                return BadRequest("Only assignees or the initiator are allowed to change the task");
+
+            if (original.Done != task.Done)
+                SetTaskTo(loggedInUser.ID, task.ID, task.Done);
+
             context.Tasks.Update(task);
+
             context.SaveChanges();
 
             task = context.Tasks.Include(x => x.Assignees).ThenInclude(x => x.User).Include(x => x.Initiator).FirstOrDefault(x => x.ID == task.ID);
 
-            await botService.SendTaskUpdatedMessage(task, null);
+            // Send update message, but ignore errors
+            try
+            {
+                await botService.SendTaskUpdatedMessage(task, loggedInUser);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error sending Message to currently logged in user with token {token}", token);
+            }
 
-            return Ok();
+            return Ok(task);
+        }
+
+        private static bool UserIsNotAllowedToEditTask(User loggedInUser, Task task)
+        {
+            return task.Initiator.ID != loggedInUser.ID && !task.Assignees.Any(u => u.UserID == loggedInUser.ID);
         }
     }
 }

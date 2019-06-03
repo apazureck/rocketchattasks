@@ -5,7 +5,7 @@
 
   <form [formGroup]="detailsFormGroup" (ngSubmit)="onSubmit()">
     <mat-form-field class="fullwidth">
-      <input matInput formControlName="title" placeholder="Title" name="title">
+      <input matInput formControlName="title" [readonly]="!isAllowedToEdit" placeholder="Title" name="title">
     </mat-form-field>
     <mat-form-field formGroupName="initiator">
       <input matInput formControlName="name" [readonly]="true" placeholder="Assigned by" name="initiator" >
@@ -15,17 +15,17 @@
       <mat-datepicker #cdpicker></mat-datepicker>
     </mat-form-field>
     <mat-form-field>
-      <input matInput formControlName="dueDate" [matDatepicker]="picker" placeholder="Due Date" name="dueDate">
+      <input matInput formControlName="dueDate" [readonly]="!isAllowedToEdit" [matDatepicker]="picker" placeholder="Due Date" name="dueDate">
       <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
       <mat-datepicker #picker></mat-datepicker>
     </mat-form-field>
-    <mat-checkbox [(checked)]="task.done" name=done (change)="changeTaskActive(task.id,$event)">
+    <mat-checkbox [(checked)]="task.done" [disabled]='!isAllowedToEdit' name=done (change)="changeTaskActive(task.id,$event)">
       Done
     </mat-checkbox>
     <mat-form-field class="fullwidth">
-      <textarea matInput formControlName="description" placeholder="Description" name="description"></textarea>
+      <textarea matInput [readonly]="!isAllowedToEdit" formControlName="description" placeholder="Description" name="description"></textarea>
     </mat-form-field>
-    <button type="submit" class="btn btn-primary" mat-button>Update</button>
+    <button type="submit" class="btn btn-primary" [disabled]="detailsFormGroup.untouched" mat-button>Update</button>
   </form>
   <p>&nbsp;</p>
   <form [formGroup]="assigneesFormGroup">

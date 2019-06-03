@@ -48,11 +48,10 @@ namespace RocketChatToDoServer.Controllers
                     }).AsQueryable();
         }
 
-        static readonly int toremove = "Bearer ".Length;
         [HttpGet("currentlyLoggedIn")]
         public User GetUserByToken([FromHeader(Name = "Authorization")] string token)
         {
-            return cache.AssignedTokens[token.Substring(toremove)];
+            return cache.GetUserByToken(token);
         }
     }
 }

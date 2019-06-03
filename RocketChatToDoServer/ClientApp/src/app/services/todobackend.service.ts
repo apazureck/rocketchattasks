@@ -79,7 +79,7 @@ export class TodobackendService {
   }
 
   updateTask(task: Task) {
-    return this.put('api/tasks', task);
+    return this.put<Task>('api/tasks', task);
   }
 
   login(credentials: string) {
